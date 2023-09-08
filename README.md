@@ -1,3 +1,4 @@
 # Responsible Drinking Aid
 
-Adding a readme, will update later
+First, `npm install`
+`npx expo start`

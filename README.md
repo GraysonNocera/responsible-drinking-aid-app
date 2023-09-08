@@ -27,3 +27,4 @@ Follow the instructions.
 [Maybe include some documentation here about how to use Android Studio? Expo Go does not support bluetooth]
 First, `npm install`
 `npx expo start`
+[Maybe include some documentation here about how to use Android Studio? Expo Go does not support bluetooth]

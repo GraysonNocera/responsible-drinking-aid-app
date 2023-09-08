@@ -15,16 +15,24 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bayuan.responsibledrinkingaidapp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.bayuan.responsibledrinkingaidapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9b32f4b5-33a4-4f85-9b57-5d5b7b585496"
+      }
+    },
+    "plugins": ["@config-plugins/react-native-ble-plx"]
   }
 }

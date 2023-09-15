@@ -2,6 +2,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Button, TextInput } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import 'expo-dev-client';
 
 function HomeScreen({ navigation }) {
   return (

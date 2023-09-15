@@ -56,6 +56,7 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
+<<<<<<< HEAD
     <RealmProvider>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Home">
@@ -64,6 +65,14 @@ export default function App() {
         </Stack.Navigator>
       </NavigationContainer>
     </RealmProvider>
+=======
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+>>>>>>> c1c0131 (expo stuff)
   );
 }
 

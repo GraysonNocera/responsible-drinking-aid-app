@@ -1,4 +1,5 @@
 import { BleManager } from 'react-native-ble-plx';
+import { Buffer } from 'buffer';
 
 // Observations about Bluetooth:
 // - The device must be paired with the phone before it can be connected to
@@ -40,26 +41,17 @@ class BluetoothReceiver {
           console.log('Discovered all services and characteristics!');
           const characteristic = await this.device.readCharacteristicForService(this.serviceUUID, this.characteristicUUID);
           console.log('Read characteristic:', characteristic.value);
-        }
 
-        // device = await this.manager.connectToDevice({ id: device.id || "" }); // Giving error rn
-        // await device.discoverAllServicesAndCharacteristics();
-  
-        // const characteristic = device.monitorCharacteristicForService(
-        //   this.serviceUUID,
-        //   this.characteristicUUID,
-        //   (error, char) => {
-        //     if (error) {
-        //       console.error('Error monitoring characteristic:', error);
-        //       return;
-        //     }
-  
-        //     const receivedData = char.value;
-        //     console.log('Received data:', receivedData);
-        //   }
-        // );
-  
-        // this.device = device;
+          this.manager.monitorCharacteristicForDevice(this.device.id, this.serviceUUID, this.characteristicUUID, (error, char) => {
+            if (error) {
+              console.error('Error monitoring characteristic:', error);
+              return;
+            }
+    
+            const receivedData = char.value;
+            console.log('Received data:',Buffer.from(receivedData, 'base64').toString('ascii'));
+          });
+        }
 
       });
     } catch (error) {

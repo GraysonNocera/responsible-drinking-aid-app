@@ -8,6 +8,7 @@ import {createRealmContext} from '@realm/react';
 import React from 'react';
 import Realm from 'realm';
 import { User } from './src/model/User';
+import { BluetoothReceiver } from './src/services/BluetoothReceiver';
 
 // Create a configuration object
 const realmConfig = {
@@ -55,6 +56,7 @@ function SettingsScreen({ navigation }) {
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  let bluetoothReceiver = new BluetoothReceiver();
   bluetoothReceiver.initializeBluetooth();
   return (
     <RealmProvider>

@@ -13,7 +13,7 @@ import { Buffer } from 'buffer';
 // - We will have to connect the monitor to I think a hook in our app so that the UI can update when we 
 //    receive new data
 
-class BluetoothReceiver {
+export class BluetoothReceiver {
   constructor() {
     this.manager = new BleManager();
     this.device = null;
@@ -66,5 +66,3 @@ class BluetoothReceiver {
     }
   }
 }
-
-export default new BluetoothReceiver();

@@ -6,6 +6,9 @@ node_modules/
 # Environment variables
 .env
 
+# npm
+package-lock.json
+
 # Expo
 .expo/
 dist/

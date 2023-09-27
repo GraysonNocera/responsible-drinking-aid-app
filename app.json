@@ -16,7 +16,11 @@
     ],
     "ios": {
       "supportsTablet": true,
+<<<<<<< HEAD
       "bundleIdentifier": "com.bayuan.responsibledrinkingaidapp"
+=======
+      "bundleIdentifier": "com.gnocera100.responsibledrinkingaidapp"
+>>>>>>> main
     },
     "android": {
       "adaptiveIcon": {

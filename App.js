@@ -55,6 +55,7 @@ function SettingsScreen({ navigation }) {
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  bluetoothReceiver.initializeBluetooth();
   return (
     <RealmProvider>
       <NavigationContainer>

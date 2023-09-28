@@ -9,6 +9,9 @@ node_modules/
 # npm
 package-lock.json
 
+# exporting realm from Android phone to computer for testing
+export-realm.sh
+
 # Expo
 .expo/
 dist/

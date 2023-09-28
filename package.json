@@ -28,7 +28,8 @@
     "realm": "^12.2.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "@types/react": "^18.2.23"
   },
   "private": true
 }

@@ -1,5 +1,6 @@
 import { BleManager } from 'react-native-ble-plx';
 import { Buffer } from 'buffer';
+import { setDrinkCount, setHeartRate, setEthanol } from './hooks';
 
 // Observations about Bluetooth:
 // - The device must be paired with the phone before it can be connected to
@@ -13,17 +14,25 @@ import { Buffer } from 'buffer';
 // - We will have to connect the monitor to I think a hook in our app so that the UI can update when we 
 //    receive new data
 
+const BluetoothMessages = {
+	drink: "drink",
+	heart: "heart",
+	ethanol: "ethanol",
+  ethanolNotification: "ethanolNotification",
+}
+
 export class BluetoothReceiver {
   constructor() {
     this.manager = new BleManager();
-    this.device = null;
-    this.serviceUUID = 'FFE0';
-    this.characteristicUUID = 'FFE1';
+    this.device = null; // the device we are connected to
+    this.serviceUUID = 'FFE0'; // service UUID for HM19
+    this.characteristicUUID = 'FFE1'; // characteristic UUID for HM19
+    this.deviceName = 'DSD TECH'; // name of the device we are connecting to
   }
 
   async initializeBluetooth() {
     try {
-      this.manager.startDeviceScan(['FFE0', 'FFE1'], null, async (error, device) => {
+      this.manager.startDeviceScan([this.serviceUUID, this.characteristicUUID], null, async (error, device) => {
         if (error) {
           console.error('Error scanning for devices:', error);
           return;
@@ -32,30 +41,62 @@ export class BluetoothReceiver {
         console.log('Found device:', device.name);
         this.manager.stopDeviceScan();
 
-        if (device.name == "DSD TECH") {
+        if (device.name == this.deviceName) {
           console.log('Found our device!');
           this.device = device;
           await this.device.connect();
           console.log('Connected to device!');
-          await this.device.discoverAllServicesAndCharacteristics();
+          // await this.device.discoverAllServicesAndCharacteristics(); // not needed?
           console.log('Discovered all services and characteristics!');
-          const characteristic = await this.device.readCharacteristicForService(this.serviceUUID, this.characteristicUUID);
-          console.log('Read characteristic:', characteristic.value);
+          // const characteristic = await this.device.readCharacteristicForService(this.serviceUUID, this.characteristicUUID);
+          // console.log('Read characteristic:', characteristic.value);
 
-          this.manager.monitorCharacteristicForDevice(this.device.id, this.serviceUUID, this.characteristicUUID, (error, char) => {
-            if (error) {
-              console.error('Error monitoring characteristic:', error);
-              return;
-            }
-    
-            const receivedData = char.value;
-            console.log('Received data:',Buffer.from(receivedData, 'base64').toString('ascii'));
-          });
+          this.manager.monitorCharacteristicForDevice(this.device.id, this.serviceUUID, this.characteristicUUID, this.receiveData);
         }
 
       });
     } catch (error) {
       console.error('Bluetooth initialization error:', error);
+    }
+  }
+
+  receiveData(error, char) {
+    if (error) {
+      console.error('Error monitoring characteristic:', error);
+      return;
+    }
+
+    // Types of data that we can receive:
+    // - Drink number button press "drink"
+    // - Heart rate "heart:xx"
+    // - Ethanol level "ethanol:xx"
+    // - Ethanol notification "ethanolNotification"
+    const receivedData = Buffer.from(char.value, 'base64').toString('ascii');
+    console.log('Received data:', receivedData);
+
+    switch (receivedData) {
+      case BluetoothMessages.drink:
+        console.log('Received drink button press');
+        setDrinkCount(drinkCount => drinkCount + 1);
+        // write to realm
+        break;
+      case BluetoothMessages.ethanolNotification:
+        console.log('Received ethanol notification');
+        // Notify user that they should use ethanol sensor
+        break;
+      case receivedData.startsWith(BluetoothMessages.heart):
+        console.log('Received heart rate');
+        setHeartRate(receivedData.split(':')[1].parseInt());
+        // write to realm
+        break;
+      case receivedData.startsWith(BluetoothMessages.ethanol):
+        console.log('Received ethanol level');
+        setEthanol(receivedData.split(':')[1].parseInt());
+        // write to realm
+        break;
+      default:
+        console.log('Received unknown data: ', receivedData);
+        break;
     }
   }
 

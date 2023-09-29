@@ -1,12 +1,25 @@
-import { StyleSheet, Text, View, Button, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Button } from 'react-native';
 import { useRealm } from '@realm/react';
+import { useState } from 'react';
+import bluetoothReceiver from '../services/BluetoothReceiver';
+import React from 'react';
+import Realm from 'realm';
 
 export default function Home({ navigation }) {
   const realm = useRealm();
+  const [ethanol, setEthanol] = useState(0);
+  const [heartRate, setHeartRate] = useState(0);
+  const [drinkCount, setDrinkCount] = useState(0);
+
+  let bl = bluetoothReceiver.getInstance()
+  bl.setHooks(setDrinkCount, setEthanol, setHeartRate)
+  bl.initializeBluetooth();
+
   return (
     <View style={styles.container}>
-      <Text>BAC: 100</Text>
-      <Text>Heartrate: 100</Text>
+      <Text>BAC: {ethanol}</Text>
+      <Text>Heartrate: {heartRate}</Text>
+      <Text>Drink Count: {drinkCount}</Text>
       <Button title="Settings"
         onPress={() => {
           navigation.navigate('Settings')
@@ -14,7 +27,7 @@ export default function Home({ navigation }) {
             realm.create('User', {
               height: 100,
               weight: 100,
-              _id: new Realm.BSON.ObjectId(),
+              _id: Realm.BSON.ObjectId(),
             });
           });
         }} />

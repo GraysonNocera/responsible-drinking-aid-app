@@ -1,6 +1,11 @@
 import { StyleSheet, Text, View, Button, TextInput } from 'react-native';
+import { useState } from 'react';
+import React from 'react';
 
 export default function SettingsScreen({ navigation }) {
+  const [weight, setWeight] = useState(-1);
+  const [height, setHeight] = useState(-1);
+
   return (
     <View style={styles.container}>
       <Text>Settings</Text>

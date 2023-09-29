@@ -22,6 +22,8 @@ const BluetoothMessages = {
 }
 
 export default class BluetoothReceiver {
+
+  // Adapted from https://stackoverflow.com/questions/44023879/react-native-best-way-to-create-singleton-pattern
   static instance = null;
   static createInstance() {
       var object = new BluetoothReceiver();
@@ -89,10 +91,11 @@ export default class BluetoothReceiver {
     }
 
     // Types of data that we can receive:
-    // - Drink number button press "drink"
-    // - Heart rate "heart:xx"
-    // - Ethanol level "ethanol:xx"
-    // - Ethanol notification "ethanolNotification"
+    // - Drink number button press
+    // - Heart rate
+    // - Ethanol level
+    // - Ethanol notification
+    // - error messages
     const receivedData = Buffer.from(char.value, 'base64').toString('ascii');
     console.log('Received data:', receivedData);
 

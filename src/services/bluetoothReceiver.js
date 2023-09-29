@@ -1,6 +1,5 @@
 import { BleManager } from 'react-native-ble-plx';
 import { Buffer } from 'buffer';
-import { setDrinkCount, setHeartRate, setEthanol } from './hooks';
 
 // Observations about Bluetooth:
 // - The device must be paired with the phone before it can be connected to
@@ -15,13 +14,27 @@ import { setDrinkCount, setHeartRate, setEthanol } from './hooks';
 //    receive new data
 
 const BluetoothMessages = {
-	drink: "drink",
-	heart: "heart",
-	ethanol: "ethanol",
+	drink: "Drink Consumed",
+	heart: "Heart Rate",
+	ethanol: "BAC",
   ethanolNotification: "ethanolNotification",
+  // error messages
 }
 
-export class BluetoothReceiver {
+export default class BluetoothReceiver {
+  static instance = null;
+  static createInstance() {
+      var object = new BluetoothReceiver();
+      return object;
+  }
+
+  static getInstance () {
+      if (!BluetoothReceiver.instance) {
+        BluetoothReceiver.instance = BluetoothReceiver.createInstance();
+      }
+      return BluetoothReceiver.instance;
+  }
+
   constructor() {
     this.manager = new BleManager();
     this.device = null; // the device we are connected to
@@ -30,7 +43,17 @@ export class BluetoothReceiver {
     this.deviceName = 'DSD TECH'; // name of the device we are connecting to
   }
 
-  async initializeBluetooth() {
+  setHooks(setDrinkCount, setEthanol, setHeartRate) {
+    this.setDrinkCount = setDrinkCount;
+    this.setEthanol = setEthanol;
+    this.setHeartRate = setHeartRate;
+  }
+
+  initializeBluetooth() {
+    if (this.device) {
+      return
+    }
+
     try {
       this.manager.startDeviceScan([this.serviceUUID, this.characteristicUUID], null, async (error, device) => {
         if (error) {
@@ -46,11 +69,10 @@ export class BluetoothReceiver {
           this.device = device;
           await this.device.connect();
           console.log('Connected to device!');
-          // await this.device.discoverAllServicesAndCharacteristics(); // not needed?
+          await this.device.discoverAllServicesAndCharacteristics();
           console.log('Discovered all services and characteristics!');
           // const characteristic = await this.device.readCharacteristicForService(this.serviceUUID, this.characteristicUUID);
           // console.log('Read characteristic:', characteristic.value);
-
           this.manager.monitorCharacteristicForDevice(this.device.id, this.serviceUUID, this.characteristicUUID, this.receiveData);
         }
 
@@ -77,7 +99,7 @@ export class BluetoothReceiver {
     switch (receivedData) {
       case BluetoothMessages.drink:
         console.log('Received drink button press');
-        setDrinkCount(drinkCount => drinkCount + 1);
+        BluetoothReceiver.instance.setDrinkCount(drinkCount => drinkCount + 1);
         // write to realm
         break;
       case BluetoothMessages.ethanolNotification:
@@ -86,12 +108,12 @@ export class BluetoothReceiver {
         break;
       case receivedData.startsWith(BluetoothMessages.heart):
         console.log('Received heart rate');
-        setHeartRate(receivedData.split(':')[1].parseInt());
+        BluetoothReceiver.instance.setHeartRate(receivedData.split(':')[1].parseInt());
         // write to realm
         break;
       case receivedData.startsWith(BluetoothMessages.ethanol):
         console.log('Received ethanol level');
-        setEthanol(receivedData.split(':')[1].parseInt());
+        BluetoothReceiver.instance.setEthanol(receivedData.split(':')[1].parseInt());
         // write to realm
         break;
       default:

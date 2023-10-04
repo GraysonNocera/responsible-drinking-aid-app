@@ -60,13 +60,13 @@ export default function Home({ navigation }) {
       <Button title="Settings"
         onPress={() => {
           navigation.navigate('Settings')
-          // realm.write(() => {
-          //   realm.create('User', {
-          //     height: 100,
-          //     weight: 100,
-          //     _id: Realm.BSON.ObjectId(),
-          //   });
-          // });
+          realm.write(() => {
+            realm.create('User', {
+              height: 100,
+              weight: 100,
+              _id: Realm.BSON.ObjectId(),
+            });
+          });
         }} />
     </View>
   );

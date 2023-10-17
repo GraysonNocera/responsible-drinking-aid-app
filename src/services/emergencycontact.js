@@ -1,7 +1,5 @@
 import { Linking } from 'react-native';
 
-// TO-DO: location services
-
 export function callEmergencyServices() {
   const emergencyNumber = '911';
 
@@ -14,10 +12,10 @@ export function callLovedOne(phoneNumber) {
     .catch((error) => console.error(`Error calling loved one: ${error}`));
 }
 
-export function messageLovedOne(phoneNumber) {
-  const currentAddress = '1 Poop St';
+export function messageLovedOne(phoneNumber, currentLocation) {
+  // const currentAddress = '1 Poop St';
   
-  const message = `I might be in an unsafe situation. My current address is: ${currentAddress}`;
+  const message = `I might be in an unsafe situation. My current address is: ${currentLocation}`;
   
   Linking.openURL(`sms:${phoneNumber}?body=${message}`)
     .catch((error) => console.error(`Error sending message to loved one: ${error}`));

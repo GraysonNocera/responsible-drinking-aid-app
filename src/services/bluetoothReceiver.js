@@ -18,6 +18,7 @@ const BluetoothMessages = {
 	heart: "Heart Rate",
 	ethanol: "BAC",
   ethanolNotification: "ethanolNotification",
+  battery: "Bat",
   // error messages
 }
 
@@ -96,32 +97,27 @@ export default class BluetoothReceiver {
     // - Ethanol level
     // - Ethanol notification
     // - error messages
-    const receivedData = Buffer.from(char.value, 'base64').toString('ascii');
+    const receivedData = Buffer.from(char.value, 'base64').toString('ascii').trim();
     console.log('Received data:', receivedData);
-
-    switch (receivedData) {
-      case BluetoothMessages.drink:
-        console.log('Received drink button press');
-        BluetoothReceiver.instance.setDrinkCount(drinkCount => drinkCount + 1);
-        // write to realm
-        break;
-      case BluetoothMessages.ethanolNotification:
-        console.log('Received ethanol notification');
-        // Notify user that they should use ethanol sensor
-        break;
-      case receivedData.startsWith(BluetoothMessages.heart):
-        console.log('Received heart rate');
-        BluetoothReceiver.instance.setHeartRate(receivedData.split(':')[1].parseInt());
-        // write to realm
-        break;
-      case receivedData.startsWith(BluetoothMessages.ethanol):
-        console.log('Received ethanol level');
-        BluetoothReceiver.instance.setEthanol(receivedData.split(':')[1].parseInt());
-        // write to realm
-        break;
-      default:
-        console.log('Received unknown data: ', receivedData);
-        break;
+    
+    // change this switch to an if/else
+    if (receivedData.startsWith(BluetoothMessages.heart)) {
+      console.log('Received heart rate');
+      BluetoothReceiver.instance.setHeartRate(parseInt(receivedData.split(':')[1]));
+    } else if (receivedData.startsWith(BluetoothMessages.ethanol)) {
+      console.log('Received ethanol level');
+      BluetoothReceiver.instance.setEthanol(parseInt(receivedData.split(':')[1]));
+    } else if (receivedData == BluetoothMessages.drink) {
+      console.log('Received drink button press');
+      BluetoothReceiver.instance.setDrinkCount(drinkCount => drinkCount + 1);
+    } else if (receivedData == BluetoothMessages.ethanolNotification) {
+      console.log('Received ethanol notification');
+      // Notify user that they should use ethanol sensor
+    } else if (receivedData.startsWith(BluetoothMessages.battery)) {
+      console.log('Received battery level');
+      // TODO - update battery level
+    }else {
+      console.log('Received unknown data:', receivedData);
     }
   }
 

@@ -17,6 +17,7 @@ export default function Home({ navigation }) {
     // Everytime the ethanol is updated, 
     const timer = setTimeout(() => {
       // TODO: Calculate widmark formula
+      // TODO: notify user to use ethanol with a Local Notification
     }, 1000 * 30);
     return () => clearTimeout(timer);
   }, [ethanol]);

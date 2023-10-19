@@ -106,7 +106,12 @@ export default class BluetoothReceiver {
       BluetoothReceiver.instance.setHeartRate(parseInt(receivedData.split(':')[1]));
     } else if (receivedData.startsWith(BluetoothMessages.ethanol)) {
       console.log('Received ethanol level');
-      BluetoothReceiver.instance.setEthanol(parseInt(receivedData.split(':')[1]));
+      const eth = parseInt(receivedData.split(':')[1]);
+
+      // TODO: find some threshold below which we consider it to just be noise
+      if (eth > 20) {
+        BluetoothReceiver.instance.setEthanol(eth);
+      }
     } else if (receivedData == BluetoothMessages.drink) {
       console.log('Received drink button press');
       BluetoothReceiver.instance.setDrinkCount(drinkCount => drinkCount + 1);
@@ -116,7 +121,7 @@ export default class BluetoothReceiver {
     } else if (receivedData.startsWith(BluetoothMessages.battery)) {
       console.log('Received battery level');
       // TODO - update battery level
-    }else {
+    } else {
       console.log('Received unknown data:', receivedData);
     }
   }

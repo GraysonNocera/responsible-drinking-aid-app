@@ -13,6 +13,13 @@ export default function Home({ navigation }) {
   const [greeting, setGreeting] = useState('');
   const [riskMessage, setRiskMessage] = useState('');
 
+  useEffect(() => {
+    // Everytime the ethanol is updated, 
+    const timer = setTimeout(() => {
+      // TODO: Calculate widmark formula
+    }, 1000 * 30);
+    return () => clearTimeout(timer);
+  }, [ethanol]);
 
   let bl = bluetoothReceiver.getInstance()
   bl.setHooks(setDrinkCount, setEthanol, setHeartRate)

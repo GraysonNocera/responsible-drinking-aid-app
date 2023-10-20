@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import bluetoothReceiver from '../services/bluetoothReceiver';
 import React from 'react';
 import Realm from 'realm';
+import { setNotification } from '../services/notifications';
 
 export default function Home({ navigation }) {
   const realm = useRealm();
@@ -18,6 +19,7 @@ export default function Home({ navigation }) {
     const timer = setTimeout(() => {
       // TODO: Calculate widmark formula
       // TODO: notify user to use ethanol with a Local Notification
+      setNotification('Drink Alert', 'Please if you have any decencies stop drinking alcohol');
     }, 1000 * 30);
     return () => clearTimeout(timer);
   }, [ethanol]);

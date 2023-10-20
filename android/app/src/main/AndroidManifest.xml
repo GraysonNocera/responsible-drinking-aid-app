@@ -36,6 +36,8 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="com.bayuan.responsibledrinkingaidapp"/>
         <data android:scheme="exp+responsible-drinking-aid-app"/>
+        <data android:scheme="com.gnocera.responsibledrinkingaidapp"/>
+        <data android:scheme="exp+application"/>
       </intent-filter>
     </activity>
     <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" android:exported="false"/>

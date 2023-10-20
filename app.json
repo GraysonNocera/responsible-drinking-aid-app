@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "responsible-drinking-aid-app",
-    "slug": "responsible-drinking-aid-app",
+    "owner": "responsible-drinking-aid",
+    "name": "responsible-drinking-aid",
+    "slug": "application",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,14 +17,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bayuan.responsibledrinkingaidapp"
+      "bundleIdentifier": "com.gnocera.responsibledrinkingaidapp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.bayuan.responsibledrinkingaidapp",
+      "package": "com.gnocera.responsibledrinkingaidapp",
       "permissions": [
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_ADMIN",
@@ -38,7 +39,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "9b32f4b5-33a4-4f85-9b57-5d5b7b585496"
+        "projectId": "c0bbf3dc-c44c-4094-9094-15f7748c9595"
       }
     }
   }

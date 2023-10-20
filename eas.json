@@ -5,7 +5,10 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "ANDROID_HOME": "/Users/gnocera/Library/Android/sdk"
+      }
     },
     "preview": {
       "distribution": "internal",

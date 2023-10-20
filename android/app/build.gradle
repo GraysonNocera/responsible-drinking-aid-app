@@ -81,9 +81,9 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace 'com.bayuan.responsibledrinkingaidapp'
+    namespace 'com.gnocera.responsibledrinkingaidapp'
     defaultConfig {
-        applicationId 'com.bayuan.responsibledrinkingaidapp'
+        applicationId 'com.gnocera.responsibledrinkingaidapp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

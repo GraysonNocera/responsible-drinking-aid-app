@@ -2,45 +2,17 @@
   "expo": {
     "owner": "responsible-drinking-aid",
     "name": "responsible-drinking-aid",
-    "slug": "application",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.gnocera.responsibledrinkingaidapp"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.gnocera.responsibledrinkingaidapp",
-      "permissions": [
-        "android.permission.BLUETOOTH",
-        "android.permission.BLUETOOTH_ADMIN",
-        "android.permission.BLUETOOTH_CONNECT"
-      ]
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "@config-plugins/react-native-ble-plx"
-    ],
+    "slug": "responsible-drinking-aid-app",
     "extra": {
       "eas": {
-        "projectId": "c0bbf3dc-c44c-4094-9094-15f7748c9595"
+        "projectId": "78c3c9f7-b965-417b-a1d5-4bcfef2b8bd1"
       }
+    },
+    "android": {
+      "package": "com.responsibledrinkingaid.responsibledrinkingaidapp"
+    },
+    "ios": {
+      "bundleIdentifier": "com.responsibledrinkingaid.responsibledrinkingaidapp"
     }
   }
 }

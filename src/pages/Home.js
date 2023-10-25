@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import bluetoothReceiver from '../services/bluetoothReceiver';
 import React from 'react';
 import Realm from 'realm';
-import { setNotification } from '../services/notifications';
 
 export default function Home({ navigation }) {
   const realm = useRealm();
@@ -13,19 +12,11 @@ export default function Home({ navigation }) {
   const [drinkCount, setDrinkCount] = useState(0);
   const [greeting, setGreeting] = useState('');
   const [riskMessage, setRiskMessage] = useState('');
+  const [notificationId, setNotificationId] = useState(null);
 
-  useEffect(() => {
-    // Everytime the ethanol is updated, 
-    const timer = setTimeout(() => {
-      // TODO: Calculate widmark formula
-      // TODO: notify user to use ethanol with a Local Notification
-      setNotification('Drink Alert', 'Please if you have any decencies stop drinking alcohol');
-    }, 1000 * 30);
-    return () => clearTimeout(timer);
-  }, [ethanol]);
-
-  let bl = bluetoothReceiver.getInstance()
-  bl.setHooks(setDrinkCount, setEthanol, setHeartRate)
+  let bl = bluetoothReceiver.getInstance();
+  bl.setHooks(setDrinkCount, setEthanol, setHeartRate);
+  bl.setTimerHooks(notificationId, setNotificationId);
   bl.initializeBluetooth();
 
   useEffect(() => {
@@ -45,9 +36,9 @@ export default function Home({ navigation }) {
     const bac = ethanol; 
     let newRiskMessage = 'Low risk';
 
-    if (bac > 0.08 && bac <= 0.15) {
+    if (bac > 10 && bac <= 20) {
       newRiskMessage = 'Medium risk';
-    } else if (bac > 0.15) {
+    } else if (bac > 20) {
       newRiskMessage = 'High risk';
     }
 

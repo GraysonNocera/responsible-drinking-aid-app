@@ -2,6 +2,17 @@ import * as Notifications from "expo-notifications";
 // import { useState, useRef, useEffect } from "react";
 // import Device from "expo-constants";
 // import { Platform } from "react-native";
+import * as TaskManager from 'expo-task-manager';
+
+const BACKGROUND_NOTIFICATION_TASK = 'BACKGROUND-NOTIFICATION-TASK';
+
+TaskManager.defineTask(BACKGROUND_NOTIFICATION_TASK, ({ data, error, executionInfo }) => {
+  console.log('Received a notification in the background!');
+  // Do something with the notification data
+});
+
+console.log("Registering background task");
+Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
 
 // Setup notifications
 export function setupNotifications(shouldShowAlert=true, shouldPlaySound=true, shouldSetBadge=true) {
@@ -15,14 +26,18 @@ export function setupNotifications(shouldShowAlert=true, shouldPlaySound=true, s
 }
 
 // Send notification
-export function setNotification(title, body, when=null) {
-  Notifications.scheduleNotificationAsync({
+export function setNotification(title, body, when=0) {
+  // time is in seconds
+
+  const id = Notifications.scheduleNotificationAsync({
     content: {
       title: title,
       body: body,
     },
-    trigger: when,
+    trigger: { seconds: when },
   });
+
+  return id
 }
 
 // export default function Notification() {

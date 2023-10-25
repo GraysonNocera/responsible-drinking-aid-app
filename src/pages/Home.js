@@ -35,21 +35,30 @@ export default function Home({ navigation }) {
     const bac = ethanol; 
     let newRiskMessage = 'Low risk';
 
-    if (bac > 0.08 && bac <= 0.15) {
+    if (bac > 1 && bac <= 4) {
       newRiskMessage = 'Medium risk';
-    } else if (bac > 0.15) {
+    } else if (bac > 4) {
       newRiskMessage = 'High risk';
     }
 
     setRiskMessage(newRiskMessage);
   }, [ethanol]);
 
+  let riskContainerColor;
+  if (riskMessage === 'Low risk') {
+    riskContainerColor = 'green';
+  } else if (riskMessage === 'Medium risk') {
+    riskContainerColor = 'yellow';
+  } else if (riskMessage === 'High risk') {
+    riskContainerColor = 'red';
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.greetingContainer}>
         <Text style={styles.greetingText}>{greeting}</Text>
       </View>
-      <View style={styles.riskContainer}>
+      <View style={[styles.riskContainer, { backgroundColor: riskContainerColor }]}>
         <Text style={styles.riskText}>{riskMessage}</Text>
       </View>
       <View style={styles.dataContainer}>

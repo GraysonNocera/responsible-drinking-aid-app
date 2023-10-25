@@ -96,8 +96,17 @@ export default class BluetoothReceiver {
     // - Ethanol level
     // - Ethanol notification
     // - error messages
-    const receivedData = Buffer.from(char.value, 'base64').toString('ascii');
+    const receivedData = Buffer.from(char.value, 'base64').toString('ascii').trim();
     console.log('Received data:', receivedData);
+
+    if (receivedData.startsWith(BluetoothMessages.drink)) {
+      console.log('Received drink button press');
+      BluetoothReceiver.instance.setDrinkCount(drinkCount => drinkCount + 1);
+    } else if (receivedData.startsWith(BluetoothMessages.ethanol)) {
+      console.log('Received ethanol level');
+      BluetoothReceiver.instance.setEthanol(parseInt(receivedData.split(':')[1]));
+      // write to realm
+    }
 
     switch (receivedData) {
       case BluetoothMessages.drink:

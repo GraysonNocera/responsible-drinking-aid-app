@@ -1,5 +1,6 @@
 import { BleManager } from 'react-native-ble-plx';
 import { Buffer } from 'buffer';
+import { setNotification } from '../services/notifications';
 
 // Observations about Bluetooth:
 // - The device must be paired with the phone before it can be connected to
@@ -13,13 +14,12 @@ import { Buffer } from 'buffer';
 // - We will have to connect the monitor to I think a hook in our app so that the UI can update when we 
 //    receive new data
 
-const BluetoothMessages = {
+export const BluetoothMessages = {
 	drink: "Drink Consumed",
 	heart: "Heart Rate",
 	ethanol: "BAC",
   ethanolNotification: "ethanolNotification",
   battery: "Bat",
-  // error messages
 }
 
 export default class BluetoothReceiver {
@@ -50,6 +50,11 @@ export default class BluetoothReceiver {
     this.setDrinkCount = setDrinkCount;
     this.setEthanol = setEthanol;
     this.setHeartRate = setHeartRate;
+  }
+
+  setTimerHooks(notificationId, setnotificationId) {
+    this.notificationId = notificationId
+    this.setnotificationId = setnotificationId
   }
 
   initializeBluetooth() {
@@ -100,7 +105,6 @@ export default class BluetoothReceiver {
     const receivedData = Buffer.from(char.value, 'base64').toString('ascii').trim();
     console.log('Received data:', receivedData);
     
-    // change this switch to an if/else
     if (receivedData.startsWith(BluetoothMessages.heart)) {
       console.log('Received heart rate');
       BluetoothReceiver.instance.setHeartRate(parseInt(receivedData.split(':')[1]));
@@ -112,9 +116,21 @@ export default class BluetoothReceiver {
       if (eth > 20) {
         BluetoothReceiver.instance.setEthanol(eth);
       }
+
+      // Clear previous interval and start new one that goes off in 30 minutes
+      
+      clearInterval(BluetoothReceiver.instance.notificationId);
+      BluetoothReceiver.instance.setnotificationId(setTimeout(() => {
+        setNotification('Drink Alert', 'Please if you have any decencies stop drinking alcohol');
+      }, 1000 * 10));
+
     } else if (receivedData == BluetoothMessages.drink) {
-      console.log('Received drink button press');
+      // console.log('Received drink button press');
       BluetoothReceiver.instance.setDrinkCount(drinkCount => drinkCount + 1);
+      // Clear previous interval and start new one that goes off in 30 minutes
+      clearInterval(BluetoothReceiver.instance.notificationId);
+      BluetoothReceiver.instance.setnotificationId(setNotification('Drink Alert', 'You just consumed a drink', 1));
+
     } else if (receivedData == BluetoothMessages.ethanolNotification) {
       console.log('Received ethanol notification');
       // Notify user that they should use ethanol sensor

@@ -58,7 +58,7 @@ export default function Home({ navigation }) {
         <Text style={styles.dataText}>Heart Rate: {heartRate}</Text>
         <Text style={styles.dataText}>Drink Count: {drinkCount}</Text>
       </View>
-      <Button title="Settings"
+        <Button title="Settings"
         onPress={() => {
           navigation.navigate('Settings')
           realm.write(() => {
@@ -69,6 +69,13 @@ export default function Home({ navigation }) {
             });
           });
         }} />
+      { __DEV__ &&
+      <Button title="Dev"
+        onPress={() => {
+          navigation.navigate('Dev')
+        }
+      } />
+      }
       <Button title="Emergency"
         onPress={() => {
           navigation.navigate('Emergency')

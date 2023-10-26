@@ -8,6 +8,8 @@ import Settings from './src/pages/Settings';
 import Emergency from './src/pages/Emergency';
 import Dev from './src/pages/Dev';
 import { setupNotifications } from './src/services/notifications';
+import { Session } from './src/model/Session';
+import { User } from './src/model/User';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,16 +20,19 @@ export default function App() {
   // Setup notifications
   setupNotifications();
 
+  // Create a configuration object
+  const realmConfig = {
+    schema: [Session, User],
+  };
+
   return (
-    <RealmProvider>
+    <RealmProvider {...realmConfig}>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Home">
           <Stack.Screen name="Home" component={Home} />
           <Stack.Screen name="Emergency" component={Emergency} />
           <Stack.Screen name="Settings" component={Settings} />
-          if (__DEV__) {
-            <Stack.Screen name="Dev" component={Dev} />
-          }
+          <Stack.Screen name="Dev" component={Dev} />
         </Stack.Navigator>
       </NavigationContainer>
     </RealmProvider>

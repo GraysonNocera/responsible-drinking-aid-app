@@ -1,6 +1,7 @@
 import { BleManager } from 'react-native-ble-plx';
 import { Buffer } from 'buffer';
 import { setNotification } from '../services/notifications';
+import { Characteristic } from 'react-native-ble-plx';
 
 // Observations about Bluetooth:
 // - The device must be paired with the phone before it can be connected to
@@ -140,6 +141,16 @@ export default class BluetoothReceiver {
     } else {
       console.log('Received unknown data:', receivedData);
     }
+  }
+
+  convertToCharacteristic(value) {
+    // Convert string to react-native-ble-plx Characteristic
+
+    let c = new Characteristic();
+    c.value = Buffer.from(value).toString('base64')
+    c.manager = BluetoothReceiver.instance.manager
+
+    return c
   }
 
   disconnectDevice() {

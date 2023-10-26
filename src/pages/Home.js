@@ -1,9 +1,12 @@
-import { StyleSheet, Text, View, Button } from 'react-native';
+import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
 import { useRealm } from '@realm/react';
 import { useEffect, useState } from 'react';
 import bluetoothReceiver from '../services/bluetoothReceiver';
 import React from 'react';
 import Realm from 'realm';
+import Icon from 'react-native-vector-icons/FontAwesome';
+
+
 
 export default function Home({ navigation }) {
   const realm = useRealm();
@@ -61,26 +64,59 @@ export default function Home({ navigation }) {
       <View style={[styles.riskContainer, { backgroundColor: riskContainerColor }]}>
         <Text style={styles.riskText}>{riskMessage}</Text>
       </View>
+      
       <View style={styles.dataContainer}>
-        <Text style={styles.dataText}>BAC: {ethanol}</Text>
-        <Text style={styles.dataText}>Heart Rate: {heartRate}</Text>
-        <Text style={styles.dataText}>Drink Count: {drinkCount}</Text>
+        <View style={styles.dataItem}>
+          <View style={styles.dataIconContainer}>
+            <Icon name="flask" size={24} color="#2196F3" />
+          </View>
+          <View style={styles.dataTextContainer}>
+            <Text style={styles.dataLabel}>Blood Alcohol Content (BAC):</Text>
+            <Text style={styles.dataValue}>{ethanol}</Text>
+          </View>
+        </View>
+        <View style={styles.dataItem}>
+          <View style={styles.dataIconContainer}>
+            <Icon name="heartbeat" size={24} color="#FF5733" />
+          </View>
+          <View style={styles.dataTextContainer}>
+            <Text style={styles.dataLabel}>Heart Rate:</Text>
+            <Text style={styles.dataValue}>{heartRate}</Text>
+          </View>
+        </View>
+        <View style={styles.dataItem}>
+          <View style={styles.dataIconContainer}>
+            <Icon name="glass" size={24} color="#E67E22" />
+          </View>
+          <View style={styles.dataTextContainer}>
+            <Text style={styles.dataLabel}>Drink Count:</Text>
+            <Text style={styles.dataValue}>{drinkCount}</Text>
+          </View>
+        </View>
       </View>
-      <Button title="Settings"
-        onPress={() => {
-          navigation.navigate('Settings')
-          realm.write(() => {
-            realm.create('User', {
-              height: 100,
-              weight: 100,
-              _id: Realm.BSON.ObjectId(),
-            });
-          });
-        }} />
-      <Button title="Emergency"
+      <View style={styles.settingsButtonContainer}>
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate('Settings');
+            // realm.write(() => {
+            //   realm.create('User', {
+            //     height: 100,
+            //     weight: 100,
+            //     _id: Realm.BSON.ObjectId(),
+            //   });
+            // });
+          }}
+        >
+          <Icon name="cog" size={40} color='#2196F3' />
+        </TouchableOpacity>
+      </View>
+      <Button title="Emergency Contact Options"
         onPress={() => {
           navigation.navigate('Emergency')
         }} />
+      <TouchableOpacity style={styles.emergencyButton} onPress={() => callEmergencyServices()}>
+        <Text style={styles.emergencyButtonText}>Call Emergency Services</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -110,7 +146,8 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   greetingText: {
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   dataContainer: {
     backgroundColor: '#fff',
@@ -121,13 +158,9 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 0,
-  },
-  dataText: {
-    fontSize: 18,
-    marginBottom: 10,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   riskContainer: {
     position: 'absolute',
@@ -147,5 +180,46 @@ const styles = StyleSheet.create({
   },
   riskText: {
     fontSize: 18,
+    // fontWeight: 'bold',
+  },
+  settingsButtonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20
+  },
+  emergencyButton: {
+    backgroundColor: 'red',
+    padding: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  emergencyButtonText: {
+    fontSize: 18,
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  dataContainer: {
+    marginTop: 20,
+  },
+  dataItem: {
+    width: 250,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  dataIconContainer: {
+    marginRight: 10,
+  },
+  dataTextContainer: {
+    flex: 1,
+  },
+  dataLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  dataValue: {
+    fontSize: 16,
   },
 });

@@ -8,7 +8,7 @@ import Settings from './src/pages/Settings';
 import Emergency from './src/pages/Emergency';
 import Dev from './src/pages/Dev';
 import { setupNotifications } from './src/services/notifications';
-import realmConfig from '.src/services/db.js'
+import realmConfig from './src/services/db.js'
 
 const Stack = createNativeStackNavigator();
 

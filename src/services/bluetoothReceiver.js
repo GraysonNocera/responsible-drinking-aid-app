@@ -2,6 +2,7 @@ import { BleManager } from 'react-native-ble-plx';
 import { Buffer } from 'buffer';
 import { setNotification } from '../services/notifications';
 import { Characteristic } from 'react-native-ble-plx';
+import { Observable } from 'rxjs';
 
 // Observations about Bluetooth:
 // - The device must be paired with the phone before it can be connected to
@@ -45,6 +46,7 @@ export default class BluetoothReceiver {
     this.serviceUUID = 'FFE0'; // service UUID for HM19
     this.characteristicUUID = 'FFE1'; // characteristic UUID for HM19
     this.deviceName = 'DSD TECH'; // name of the device we are connecting to
+    this.observable = null; // the observable that we will use to receive data from the device
   }
 
   setHooks(setDrinkCount, setEthanol, setHeartRate) {
@@ -82,7 +84,18 @@ export default class BluetoothReceiver {
           console.log('Discovered all services and characteristics!');
           // const characteristic = await this.device.readCharacteristicForService(this.serviceUUID, this.characteristicUUID);
           // console.log('Read characteristic:', characteristic.value);
-          this.manager.monitorCharacteristicForDevice(this.device.id, this.serviceUUID, this.characteristicUUID, this.receiveData);
+
+          this.observable = new Observable((subscriber) => {
+            this.manager.monitorCharacteristicForDevice(this.device.id, this.serviceUUID, this.characteristicUUID, (error, char) => {
+              if (error) {
+                console.error('Error monitoring characteristic:', error);
+                return;
+              }
+              subscriber.next(Buffer.from(char.value, 'base64').toString('ascii').trim());
+              this.receiveData(error, char);
+            });
+          });
+          // this.manager.monitorCharacteristicForDevice(this.device.id, this.serviceUUID, this.characteristicUUID, this.receiveData);
         }
 
       });
@@ -152,6 +165,15 @@ export default class BluetoothReceiver {
 
     return c
   }
+
+  // createObservable() {
+  //   // Create an observable that emits data from the bluetooth device
+
+  //   const observable = new Observable((subscriber) => {
+
+
+  //   })
+  // }
 
   disconnectDevice() {
     if (this.device) {

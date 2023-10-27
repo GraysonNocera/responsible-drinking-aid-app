@@ -45,6 +45,18 @@ export default function Home({ navigation }) {
     setRiskMessage(newRiskMessage);
   }, [ethanol]);
 
+  // bl.observable.subscribe({
+  //   next(x) {
+  //     console.log("got value " + x);
+  //   },
+  //   error(err) {
+  //     console.error("something wrong occurred: " + err);
+  //   },
+  //   complete() {
+  //     console.log("done");
+  //   },
+  // })
+
   return (
     <View style={styles.container}>
       <View style={styles.greetingContainer}>

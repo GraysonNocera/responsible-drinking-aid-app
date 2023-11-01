@@ -1,6 +1,7 @@
 {
   "expo": {
-    "name": "responsible-drinking-aid-app",
+    "owner": "responsible-drinking-aid",
+    "name": "responsible-drinking-aid",
     "slug": "responsible-drinking-aid-app",
     "version": "1.0.0",
     "orientation": "portrait",

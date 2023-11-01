@@ -15,10 +15,11 @@ export default function Home({ navigation }) {
   const [drinkCount, setDrinkCount] = useState(0);
   const [greeting, setGreeting] = useState('');
   const [riskMessage, setRiskMessage] = useState('');
+  const [notificationId, setNotificationId] = useState(null);
 
-
-  let bl = bluetoothReceiver.getInstance()
-  bl.setHooks(setDrinkCount, setEthanol, setHeartRate)
+  let bl = bluetoothReceiver.getInstance();
+  bl.setHooks(setDrinkCount, setEthanol, setHeartRate);
+  bl.setTimerHooks(notificationId, setNotificationId);
   bl.initializeBluetooth();
 
   useEffect(() => {
@@ -38,9 +39,9 @@ export default function Home({ navigation }) {
     const bac = ethanol; 
     let newRiskMessage = 'Low risk';
 
-    if (bac > 1 && bac <= 4) {
+    if (bac > 10 && bac <= 20) {
       newRiskMessage = 'Medium risk';
-    } else if (bac > 4) {
+    } else if (bac > 20) {
       newRiskMessage = 'High risk';
     }
 

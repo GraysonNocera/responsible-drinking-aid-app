@@ -3,16 +3,39 @@
     "owner": "responsible-drinking-aid",
     "name": "responsible-drinking-aid",
     "slug": "responsible-drinking-aid-app",
-    "extra": {
-      "eas": {
-        "projectId": "78c3c9f7-b965-417b-a1d5-4bcfef2b8bd1"
-      }
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bayuan.responsibledrinkingaidapp"
     },
     "android": {
-      "package": "com.responsibledrinkingaid.responsibledrinkingaidapp"
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.bayuan.responsibledrinkingaidapp",
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT"
+      ]
     },
-    "ios": {
-      "bundleIdentifier": "com.responsibledrinkingaid.responsibledrinkingaidapp"
-    }
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "@config-plugins/react-native-ble-plx"
+    ]
   }
 }

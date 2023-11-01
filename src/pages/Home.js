@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import bluetoothReceiver from '../services/bluetoothReceiver';
 import React from 'react';
 import Realm from 'realm';
-import { filter } from 'rxjs';
+import { filter, timeInterval } from 'rxjs';
 import { BluetoothMessages } from '../services/bluetoothReceiver';
 import { setNotification } from '../services/notifications';
 import { cancelScheduledNotificationAsync } from 'expo-notifications';
@@ -18,7 +18,8 @@ export default function Home({ navigation }) {
   const [drinkCount, setDrinkCount] = useState(0);
   const [greeting, setGreeting] = useState('');
   const [riskMessage, setRiskMessage] = useState('');
-  const notificationId = useRef(null);
+  const drinkNotificationId = useRef(null);
+  const ethanolNotificationId = useRef(null);
 
   let bl = bluetoothReceiver.getInstance();
   let bluetoothMonitor = bl.initializeBluetooth();
@@ -31,12 +32,32 @@ export default function Home({ navigation }) {
     (value) => {
       let ethanol = value.split(':')[1];
       setEthanol(ethanol);
+      ethanolNotificationId.current = setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, 60 * 30);
     }
   );
 
   bluetoothMonitor.pipe(
     filter((value) => {
-      return value.startsWith(BluetoothMessages.heart);
+      return value.startsWith(BluetoothMessages.ethanol);
+    }),
+    timeInterval()
+  ).subscribe(
+    (value, interval) => {
+      console.log('interval', interval);
+      if (interval > 1000 * 60 * 30) {
+        // Widmark formula because it has been 30 minutes since getting an ethanol reading
+        // 100 * (mass of alcohol in grams) / (body weight in grams * Widmark factor)
+        // 0.7 - men
+        // 0.6 - women
+        let widmark = 0;
+        setEthanol(widmark);
+      }
+    }
+  );
+
+  bluetoothMonitor.pipe(
+    filter((value) => {
+      return value.startsWith(BluetoothMessages.heartRate);
     }
   )).subscribe(
     (value) => {
@@ -47,13 +68,19 @@ export default function Home({ navigation }) {
 
   bluetoothMonitor.pipe(
     filter((value) => {
-      return value.startsWith(BluetoothMessages.drink);
+      return value in [BluetoothMessages.addDrink, BluetoothMessages.removeDrink, BluetoothMessages.clearDrinks];
     })
-  ).subscribe(() => {
-    setDrinkCount(drinkCount + 1);
-    
-    cancelScheduledNotificationAsync(notificationId);
-    notificationId.current = setNotification('Drink', 'You just consumed a drink', 20);
+  ).subscribe((value) => {
+    if (value === BluetoothMessages.addDrink) {
+      setDrinkCount(drinkCount + 1);
+      cancelScheduledNotificationAsync(drinkNotificationId);
+      drinkNotificationId.current = setNotification('Drink', 'You recently consumed a drink! Please use the BAC sensor', 60 * 20);
+    } else if (value === BluetoothMessages.removeDrink) {
+      setDrinkCount(drinkCount - 1);
+      cancelScheduledNotificationAsync(drinkNotificationId);
+    } else if (value === BluetoothMessages.clearDrinks) {
+      setDrinkCount(0);
+    }
   });
 
   useEffect(() => {

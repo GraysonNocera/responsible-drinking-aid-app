@@ -9,8 +9,7 @@ import { BluetoothMessages } from '../services/bluetoothReceiver';
 import { setNotification } from '../services/notifications';
 import { cancelScheduledNotificationAsync } from 'expo-notifications';
 import Icon from 'react-native-vector-icons/FontAwesome';
-
-
+import { callEmergencyServices } from '../services/emergency';
 
 export default function Home({ navigation }) {
   const realm = useRealm();
@@ -255,9 +254,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: 'white',
     fontWeight: 'bold',
-  },
-  dataContainer: {
-    marginTop: 20,
   },
   dataItem: {
     width: 250,

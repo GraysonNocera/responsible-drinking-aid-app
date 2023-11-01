@@ -4,6 +4,7 @@ import { setNotification } from '../services/notifications';
 import { Characteristic } from 'react-native-ble-plx';
 import { Observable, concatMap, share, of } from 'rxjs';
 import * as Location from 'expo-location';
+import { BluetoothMessages } from '../constants';
 
 // Observations about Bluetooth:
 // - The device must be paired with the phone before it can be connected to
@@ -16,19 +17,6 @@ import * as Location from 'expo-location';
 //    data streams for each type of data we receive (button press, heart rate, bac, etc.)
 // - We will have to connect the monitor to I think a hook in our app so that the UI can update when we 
 //    receive new data
-
-export const BluetoothMessages = {
-  addDrink: "Add Drink",
-  subtractDrink: "Subtract Drink",
-  clearDrinks: "Clear Drinks",
-  drinkTimerStart: "Drink Timer Start",
-  drinkTimerReset: "Drink Timer Reset",
-  ethanolSensorOn: "Ethanol Sensor On",
-  ethanolSensorOff: "Ethanol Sensor Off",
-	ethanol: "BAC",
-  adc: "ADC",
-  heartRate: "Heart Rate",
-}
 
 export default class BluetoothReceiver {
 

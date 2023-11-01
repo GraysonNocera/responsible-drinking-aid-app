@@ -12,7 +12,7 @@ import realmConfig from './src/services/db.js'
 import { LogBox } from 'react-native';
 import bluetoothReceiver from './src/services/bluetoothReceiver';
 
-LogBox.ignoreLogs(['new NativeEventEmitter()']); // Ignore log notification by message
+LogBox.ignoreLogs(['`new NativeEventEmitter()`']); // Ignore log notification by message
 
 const Stack = createNativeStackNavigator();
 
@@ -24,30 +24,10 @@ export default class App extends Component {
 
     let bl = bluetoothReceiver.getInstance();
     let result = bl.initializeBluetooth();
-    result.subscribe(
-      (value) => {
-        console.log('value: ', value);
-      },
-      (error) => {
-        console.log('error', error);
-      },
-      () => {
-        console.log('complete');
-      }
-    );
+    result.subscribe(console.log);
 
     let res2 = bl.initializeBluetooth();
-    res2.subscribe(
-      (value) => {
-        console.log('value2: ', value);
-      },
-      (error) => {
-        console.log('error', error);
-      },
-      () => {
-        console.log('complete');
-      }
-    );
+    res2.subscribe(console.log);
 
     // Setup notifications
     setupNotifications();

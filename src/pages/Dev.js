@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View, Button, TextInput } from 'react-native';
 import { useRef } from 'react';
 import bluetoothReceiver from '../services/bluetoothReceiver';
-import { Observable, Subject, merge } from 'rxjs';
+import { Subject, merge } from 'rxjs';
 
 export default function Dev({ navigation }) {
   const [heartRate, onChangeHeartRate] = React.useState('');

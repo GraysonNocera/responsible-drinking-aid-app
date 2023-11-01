@@ -10,6 +10,7 @@ import { setNotification } from '../services/notifications';
 import { cancelScheduledNotificationAsync } from 'expo-notifications';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { callEmergencyServices } from '../services/emergencycontact';
+import { MILLIS_TO_SECONDS, SECONDS_TO_MINUTES, NOTIFICATION_AFTER_DRINK, NOTIFICATION_AFTER_ETHANOL, WIDMARK_CONSTANT, GRAMS_PER_DRINK, WIDMARK_MEN_FACTOR } from '../constants';
 
 export default function Home({ navigation }) {
   const realm = useRealm();
@@ -21,67 +22,72 @@ export default function Home({ navigation }) {
   const drinkNotificationId = useRef(null);
   const ethanolNotificationId = useRef(null);
 
-  let bl = bluetoothReceiver.getInstance();
-  let bluetoothMonitor = bl.initializeBluetooth();
-  
-  bluetoothMonitor.pipe(
-    filter((value) => {
-      return value.startsWith(BluetoothMessages.ethanol);
-    })
-  ).subscribe(
-    (value) => {
-      let ethanol = value.split(':')[1];
-      setEthanol(ethanol);
-      ethanolNotificationId.current = setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, 60 * 30);
-    }
-  );
-
-  bluetoothMonitor.pipe(
-    filter((value) => {
-      return value.startsWith(BluetoothMessages.ethanol);
-    }),
-    timeInterval()
-  ).subscribe(
-    (value, interval) => {
-      console.log('interval', interval);
-      if (interval > 1000 * 60 * 30) {
-        // Widmark formula because it has been 30 minutes since getting an ethanol reading
-        // 100 * (mass of alcohol in grams) / (body weight in grams * Widmark factor)
-        // 0.7 - men
-        // 0.6 - women
-        let widmark = 0;
-        setEthanol(widmark);
+  useEffect(() => {
+    let bl = bluetoothReceiver.getInstance();
+    let bluetoothMonitor = bl.initializeBluetooth();
+    
+    bluetoothMonitor.pipe(
+      filter((value) => {
+        return value.startsWith(BluetoothMessages.ethanol);
+      })
+    ).subscribe(
+      (value) => {
+        let ethanol = value.split(':')[1];
+        setEthanol(ethanol);
+        ethanolNotificationId.current = setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, 60 * 30);
       }
-    }
-  );
+    );
+  
+    bluetoothMonitor.pipe(
+      filter((value) => {
+        return value.startsWith(BluetoothMessages.ethanol);
+      }),
+      timeInterval()
+    ).subscribe(
+      (value, interval) => {
+        console.log('interval', interval);
+        if (interval > MILLIS_TO_SECONDS * SECONDS_TO_MINUTES * NOTIFICATION_AFTER_ETHANOL) {
+          // Widmark formula because it has been 30 minutes since getting an ethanol reading
+          // 100 * (mass of alcohol in grams) / (body weight in grams * Widmark factor)
+          // 0.7 - men
+          // 0.6 - women
+          // TODO: fix up settings page to write to realm
+          let widmark = WIDMARK_CONSTANT * (drinkCount * GRAMS_PER_DRINK) / (1 * WIDMARK_MEN_FACTOR);
+          setEthanol(widmark);
+        }
+      }
+    );
+  
+    bluetoothMonitor.pipe(
+      filter((value) => {
+        return value.startsWith(BluetoothMessages.heartRate);
+      }
+    )).subscribe(
+      (value) => {
+        let heartRate = value.split(':')[1];
+        setHeartRate(heartRate);
+      }
+    );
+  
+    bluetoothMonitor.pipe(
+      filter((value) => {
+        return value in [BluetoothMessages.addDrink, BluetoothMessages.removeDrink, BluetoothMessages.clearDrinks];
+      })
+    ).subscribe((value) => {
+      if (value === BluetoothMessages.addDrink) {
+        setDrinkCount(drinkCount + 1);
+        cancelScheduledNotificationAsync(drinkNotificationId);
+        drinkNotificationId.current = setNotification('Drink', 'You recently consumed a drink! Please use the BAC sensor', SECONDS_TO_MINUTES * NOTIFICATION_AFTER_DRINK);
+      } else if (value === BluetoothMessages.removeDrink) {
+        setDrinkCount(drinkCount - 1);
+        cancelScheduledNotificationAsync(drinkNotificationId);
+      } else if (value === BluetoothMessages.clearDrinks) {
+        setDrinkCount(0);
+      }
+    });
+    
+  }, []);
 
-  bluetoothMonitor.pipe(
-    filter((value) => {
-      return value.startsWith(BluetoothMessages.heartRate);
-    }
-  )).subscribe(
-    (value) => {
-      let heartRate = value.split(':')[1];
-      setHeartRate(heartRate);
-    }
-  );
-
-  bluetoothMonitor.pipe(
-    filter((value) => {
-      return value in [BluetoothMessages.addDrink, BluetoothMessages.removeDrink, BluetoothMessages.clearDrinks];
-    })
-  ).subscribe((value) => {
-    if (value === BluetoothMessages.addDrink) {
-      setDrinkCount(drinkCount + 1);
-      cancelScheduledNotificationAsync(drinkNotificationId);
-      drinkNotificationId.current = setNotification('Drink', 'You recently consumed a drink! Please use the BAC sensor', 60 * 20);
-    } else if (value === BluetoothMessages.removeDrink) {
-      setDrinkCount(drinkCount - 1);
-      cancelScheduledNotificationAsync(drinkNotificationId);
-    } else if (value === BluetoothMessages.clearDrinks) {
-      setDrinkCount(0);
-    }
-  });
 
   useEffect(() => {
     // Good {morning/afternoon/evening!}

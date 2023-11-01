@@ -1,9 +1,13 @@
 import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
 import { useRealm } from '@realm/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import bluetoothReceiver from '../services/bluetoothReceiver';
 import React from 'react';
 import Realm from 'realm';
+import { filter } from 'rxjs';
+import { BluetoothMessages } from '../services/bluetoothReceiver';
+import { setNotification } from '../services/notifications';
+import { cancelScheduledNotificationAsync } from 'expo-notifications';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 
@@ -15,12 +19,43 @@ export default function Home({ navigation }) {
   const [drinkCount, setDrinkCount] = useState(0);
   const [greeting, setGreeting] = useState('');
   const [riskMessage, setRiskMessage] = useState('');
-  const [notificationId, setNotificationId] = useState(null);
+  const notificationId = useRef(null);
 
   let bl = bluetoothReceiver.getInstance();
-  bl.setHooks(setDrinkCount, setEthanol, setHeartRate);
-  bl.setTimerHooks(notificationId, setNotificationId);
-  bl.initializeBluetooth();
+  let bluetoothMonitor = bl.initializeBluetooth();
+  
+  bluetoothMonitor.pipe(
+    filter((value) => {
+      return value.startsWith(BluetoothMessages.ethanol);
+    })
+  ).subscribe(
+    (value) => {
+      let ethanol = value.split(':')[1];
+      setEthanol(ethanol);
+    }
+  );
+
+  bluetoothMonitor.pipe(
+    filter((value) => {
+      return value.startsWith(BluetoothMessages.heart);
+    }
+  )).subscribe(
+    (value) => {
+      let heartRate = value.split(':')[1];
+      setHeartRate(heartRate);
+    }
+  );
+
+  bluetoothMonitor.pipe(
+    filter((value) => {
+      return value.startsWith(BluetoothMessages.drink);
+    })
+  ).subscribe(() => {
+    setDrinkCount(drinkCount + 1);
+    
+    cancelScheduledNotificationAsync(notificationId);
+    notificationId.current = setNotification('Drink', 'You just consumed a drink', 20);
+  });
 
   useEffect(() => {
     // Good {morning/afternoon/evening!}
@@ -46,7 +81,7 @@ export default function Home({ navigation }) {
     }
 
     setRiskMessage(newRiskMessage);
-  }, [ethanol]);
+  }, [ethanol]); 
 
   let riskContainerColor;
   if (riskMessage === 'Low risk') {
@@ -95,6 +130,26 @@ export default function Home({ navigation }) {
           </View>
         </View>
       </View>
+        <Button title="Settings"
+        onPress={() => {
+          navigation.navigate('Settings')
+          realm.write(() => {
+            realm.create('User', {
+              height: 100,
+              weight: 100,
+              _id: Realm.BSON.ObjectId(),
+            });
+          });
+        }} />
+
+      {/* eslint-disable-next-line no-undef */}
+      { __DEV__ &&
+      <Button title="Dev"
+        onPress={() => {
+          navigation.navigate('Dev')
+        }
+      } />
+      }
       <View style={styles.settingsButtonContainer}>
         <TouchableOpacity
           onPress={() => {

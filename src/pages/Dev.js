@@ -1,7 +1,5 @@
 import React from 'react';
 import { Text, View, Button, TextInput } from 'react-native';
-import bluetoothReceiver from '../services/bluetoothReceiver';
-import { BluetoothMessages } from '../services/bluetoothReceiver';
 import { useRef } from 'react';
 
 export default function Dev({ navigation }) {

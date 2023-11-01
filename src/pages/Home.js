@@ -104,6 +104,8 @@ export default function Home({ navigation }) {
             });
           });
         }} />
+
+      {/* eslint-disable-next-line no-undef */}
       { __DEV__ &&
       <Button title="Dev"
         onPress={() => {

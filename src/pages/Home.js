@@ -15,9 +15,18 @@ export default function Home({ navigation }) {
   const [notificationId, setNotificationId] = useState(null);
 
   let bl = bluetoothReceiver.getInstance();
-  bl.setHooks(setDrinkCount, setEthanol, setHeartRate);
-  bl.setTimerHooks(notificationId, setNotificationId);
-  bl.initializeBluetooth();
+  let res = bl.initializeBluetooth();
+  res.subscribe(
+    (value) => {
+      console.log('value from Home: ', value);
+    },
+    (error) => {
+      console.log('error', error);
+    },
+    () => {
+      console.log('complete');
+    }
+  );
 
   useEffect(() => {
     // Good {morning/afternoon/evening!}
@@ -43,19 +52,7 @@ export default function Home({ navigation }) {
     }
 
     setRiskMessage(newRiskMessage);
-  }, [ethanol]);
-
-  // bl.observable.subscribe({
-  //   next(x) {
-  //     console.log("got value " + x);
-  //   },
-  //   error(err) {
-  //     console.error("something wrong occurred: " + err);
-  //   },
-  //   complete() {
-  //     console.log("done");
-  //   },
-  // })
+  }, [ethanol]); 
 
   return (
     <View style={styles.container}>

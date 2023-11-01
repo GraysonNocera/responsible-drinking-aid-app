@@ -1,9 +1,13 @@
 import { StyleSheet, Text, View, Button } from 'react-native';
 import { useRealm } from '@realm/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import bluetoothReceiver from '../services/bluetoothReceiver';
 import React from 'react';
 import Realm from 'realm';
+import { filter } from 'rxjs';
+import { BluetoothMessages } from '../services/bluetoothReceiver';
+import { setNotification } from '../services/notifications';
+import { cancelScheduledNotificationAsync } from 'expo-notifications';
 
 export default function Home({ navigation }) {
   const realm = useRealm();
@@ -12,21 +16,43 @@ export default function Home({ navigation }) {
   const [drinkCount, setDrinkCount] = useState(0);
   const [greeting, setGreeting] = useState('');
   const [riskMessage, setRiskMessage] = useState('');
-  const [notificationId, setNotificationId] = useState(null);
+  const notificationId = useRef(null);
 
   let bl = bluetoothReceiver.getInstance();
-  let res = bl.initializeBluetooth();
-  res.subscribe(
+  let bluetoothMonitor = bl.initializeBluetooth();
+  
+  bluetoothMonitor.pipe(
+    filter((value) => {
+      return value.startsWith(BluetoothMessages.ethanol);
+    })
+  ).subscribe(
     (value) => {
-      console.log('value from Home: ', value);
-    },
-    (error) => {
-      console.log('error', error);
-    },
-    () => {
-      console.log('complete');
+      let ethanol = value.split(':')[1];
+      setEthanol(ethanol);
     }
   );
+
+  bluetoothMonitor.pipe(
+    filter((value) => {
+      return value.startsWith(BluetoothMessages.heart);
+    }
+  )).subscribe(
+    (value) => {
+      let heartRate = value.split(':')[1];
+      setHeartRate(heartRate);
+    }
+  );
+
+  bluetoothMonitor.pipe(
+    filter((value) => {
+      return value.startsWith(BluetoothMessages.drink);
+    })
+  ).subscribe(() => {
+    setDrinkCount(drinkCount + 1);
+    
+    cancelScheduledNotificationAsync(notificationId);
+    notificationId.current = setNotification('Drink', 'You just consumed a drink', 20);
+  });
 
   useEffect(() => {
     // Good {morning/afternoon/evening!}

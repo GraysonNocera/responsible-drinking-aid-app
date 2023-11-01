@@ -18,11 +18,16 @@ import * as Location from 'expo-location';
 //    receive new data
 
 export const BluetoothMessages = {
-	drink: "Drink Consumed",
-	heart: "Heart Rate",
+  addDrink: "Add Drink",
+  subtractDrink: "Subtract Drink",
+  clearDrinks: "Clear Drinks",
+  drinkTimerStart: "Drink Timer Start",
+  drinkTimerReset: "Drink Timer Reset",
+  ethanolSensorOn: "Ethanol Sensor On",
+  ethanolSensorOff: "Ethanol Sensor Off",
 	ethanol: "BAC",
-  ethanolNotification: "ethanolNotification",
-  battery: "Bat",
+  adc: "ADC",
+  heartRate: "Heart Rate",
 }
 
 export default class BluetoothReceiver {

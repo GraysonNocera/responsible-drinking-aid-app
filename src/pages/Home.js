@@ -1,9 +1,7 @@
 import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
-import { useRealm } from '@realm/react';
 import { useEffect, useState, useRef } from 'react';
 import bluetoothReceiver from '../services/bluetoothReceiver';
 import React from 'react';
-import Realm from 'realm';
 import { filter, timeInterval } from 'rxjs';
 import { BluetoothMessages } from '../services/bluetoothReceiver';
 import { setNotification } from '../services/notifications';
@@ -13,7 +11,6 @@ import { callEmergencyServices } from '../services/emergencycontact';
 import { MILLIS_TO_SECONDS, SECONDS_TO_MINUTES, NOTIFICATION_AFTER_DRINK, NOTIFICATION_AFTER_ETHANOL, WIDMARK_CONSTANT, GRAMS_PER_DRINK, WIDMARK_MEN_FACTOR } from '../constants';
 
 export default function Home({ navigation }) {
-  const realm = useRealm();
   const [ethanol, setEthanol] = useState(0);
   const [heartRate, setHeartRate] = useState(0);
   const [drinkCount, setDrinkCount] = useState(0);
@@ -165,13 +162,6 @@ export default function Home({ navigation }) {
         <Button title="Settings"
         onPress={() => {
           navigation.navigate('Settings')
-          realm.write(() => {
-            realm.create('User', {
-              height: 100,
-              weight: 100,
-              _id: Realm.BSON.ObjectId(),
-            });
-          });
         }} />
 
       {/* eslint-disable-next-line no-undef */}

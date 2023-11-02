@@ -2,6 +2,8 @@ import { BleManager } from 'react-native-ble-plx';
 import { Buffer } from 'buffer';
 import { setNotification } from '../services/notifications';
 import { Characteristic } from 'react-native-ble-plx';
+import { Observable, concatMap, share } from 'rxjs';
+import * as Location from 'expo-location';
 
 // Observations about Bluetooth:
 // - The device must be paired with the phone before it can be connected to
@@ -45,6 +47,7 @@ export default class BluetoothReceiver {
     this.serviceUUID = 'FFE0'; // service UUID for HM19
     this.characteristicUUID = 'FFE1'; // characteristic UUID for HM19
     this.deviceName = 'DSD TECH'; // name of the device we are connecting to
+    this.observable = null; // the observable that we will use to receive data from the device
   }
 
   setHooks(setDrinkCount, setEthanol, setHeartRate) {
@@ -60,35 +63,75 @@ export default class BluetoothReceiver {
 
   initializeBluetooth() {
     if (this.device) {
-      return
+      return;
     }
 
-    try {
-      this.manager.startDeviceScan([this.serviceUUID, this.characteristicUUID], null, async (error, device) => {
-        if (error) {
-          console.error('Error scanning for devices:', error);
-          return;
-        }
-
-        console.log('Found device:', device.name);
-        this.manager.stopDeviceScan();
-
-        if (device.name == this.deviceName) {
-          console.log('Found our device!');
-          this.device = device;
-          await this.device.connect();
-          console.log('Connected to device!');
-          await this.device.discoverAllServicesAndCharacteristics();
-          console.log('Discovered all services and characteristics!');
-          // const characteristic = await this.device.readCharacteristicForService(this.serviceUUID, this.characteristicUUID);
-          // console.log('Read characteristic:', characteristic.value);
-          this.manager.monitorCharacteristicForDevice(this.device.id, this.serviceUUID, this.characteristicUUID, this.receiveData);
-        }
-
+    let permissions = new Observable((subscriber) => {
+      Location.getForegroundPermissionsAsync().then((permissions) => {
+        subscriber.next(permissions);
+        subscriber.complete();
       });
-    } catch (error) {
-      console.error('Bluetooth initialization error:', error);
-    }
+    });
+
+    let connect = permissions
+    .pipe(concatMap((permissions) => {
+      if (permissions.status == 'granted') {
+        console.log('Location permissions granted');
+
+        return new Observable((subscriber) => {
+          this.manager.startDeviceScan([this.serviceUUID, this.characteristicUUID], null, async (error, device) => {
+            if (error) {
+              console.log('Error scanning for devices:', error);
+              subscriber.error(error);
+            }
+
+            console.log('Found device:', device.name);
+            this.manager.stopDeviceScan();
+
+            if (device.name == this.deviceName) {
+              console.log('Found our device!');
+              this.device = device;
+              await this.device.connect();
+              console.log('Connected to device!');
+              await this.device.discoverAllServicesAndCharacteristics();
+              console.log('Discovered all services and characteristics!');
+              subscriber.next(true);
+              subscriber.complete();
+            }
+          });
+        });
+      } else {
+        return new Observable((subscriber) => {
+          subscriber.error('Cannot connect because location permissions not granted');
+        });
+      }
+    }));
+
+    let monitor = connect
+    .pipe(concatMap((connect) => {
+      console.log('Connect: ', connect)
+
+      if (connect) { 
+        console.log('Connected to bluetooth device');
+        return new Observable((subscriber) => {
+          this.manager.monitorCharacteristicForDevice(this.device.id, this.serviceUUID, this.characteristicUUID, (error, char) => {
+            if (error) {
+              subscriber.error(error);
+            }
+            subscriber.next(Buffer.from(char.value, 'base64').toString('ascii').trim());
+          })
+        });
+      } else {
+        console.log('Not connected to bluetooth device')
+        return new Observable((subscriber) => {
+          subscriber.error('Cannot monitor because not connected to bluetooth device');
+        });
+      }
+    }), share());
+
+    console.log('Monitor: ', monitor)
+
+    return monitor;
   }
 
   receiveData(error, char) {

@@ -37,26 +37,11 @@ export default function Home({ navigation }) {
         let ethanol = value.split(':')[1];
         setEthanol(ethanol);
         ethanolNotificationId.current = setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, 60 * 30);
-      }
-    );
-  
-    bluetoothMonitor.pipe(
-      filter((value) => {
-        return value.startsWith(BluetoothMessages.ethanol);
-      }),
-      timeInterval()
-    ).subscribe(
-      (value, interval) => {
-        console.log('interval', interval);
-        if (interval > minutesToMillis(Constants.NOTIFICATION_AFTER_ETHANOL)) {
-          // Widmark formula because it has been 30 minutes since getting an ethanol reading
-          // 100 * (mass of alcohol in grams) / (body weight in grams * Widmark factor)
-
-          // TODO: fix up settings page to write to realm
+        setTimeout(() => {
           let widmark = calculateWidmark(drinkCount, user[0].isMale, user[0].weight);
           setEthanol(widmark);
           riskFactor.current = calculateRiskFactor(widmark, drinkCount, user[0].height, user[0].weight, user[0].isMale);
-        }
+        }, Constants.minutesToMillis(Constants.NOTIFICATION_AFTER_ETHANOL));
       }
     );
   

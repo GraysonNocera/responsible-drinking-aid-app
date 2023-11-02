@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Button } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import React from 'react';
 import Realm from 'realm';
 import Icon from 'react-native-vector-icons/FontAwesome';

@@ -1,14 +1,28 @@
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Button } from 'react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import React from 'react';
 import Realm from 'realm';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { useRealm } from '@realm/react';
+import { useQuery, useRealm } from '@realm/react';
 
 export default function SettingsScreen({ navigation }) {
   const [weight, onWeightChange] = useState(-1);
   const [height, onHeightChange] = useState(-1);
   const realm = useRealm();
+  let users;
+  useEffect(() => {
+    users = realm.objects('User');
+    if (users && users.length > 1) {
+      console.log('users', users);
+      // realm.write(() => {
+      //   realm.delete(users);
+      // });
+    } else {
+      users = [{height: 0, weight: 0}];
+    }
+  });
+
+  let unchangedUsers = useQuery('User');
 
   return (
     <View style={styles.container}>
@@ -31,6 +45,12 @@ export default function SettingsScreen({ navigation }) {
             return;
           }
 
+          console.log("Delete all users")
+          realm.write(() => {
+            realm.delete(unchangedUsers);
+          });
+
+          console.log("Creating user")
           realm.write(() => {
             realm.create('User', {
               height: heightInt,
@@ -38,16 +58,19 @@ export default function SettingsScreen({ navigation }) {
               _id: Realm.BSON.ObjectId(),
             });
           });
+          realm.objects('User').forEach((user) => {
+            console.log('user: ', user);
+          });
         }
         } />
       </View>
-        <View style={styles.homeButtonContainer}>
-          <TouchableOpacity
-          onPress={() => navigation.navigate('Home')} 
-          >
-            <Icon name="home" size={40} color='#2196F3' />
-          </TouchableOpacity>
-        </View>
+      <View style={styles.homeButtonContainer}>
+        <TouchableOpacity
+        onPress={() => navigation.navigate('Home')} 
+        >
+          <Icon name="home" size={40} color='#2196F3' />
+        </TouchableOpacity>
+      </View>
     </View>
     
   )

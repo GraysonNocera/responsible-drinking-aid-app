@@ -9,20 +9,7 @@ export default function SettingsScreen({ navigation }) {
   const [weight, onWeightChange] = useState(-1);
   const [height, onHeightChange] = useState(-1);
   const realm = useRealm();
-  let users;
-  useEffect(() => {
-    users = realm.objects('User');
-    if (users && users.length > 1) {
-      console.log('users', users);
-      // realm.write(() => {
-      //   realm.delete(users);
-      // });
-    } else {
-      users = [{height: 0, weight: 0}];
-    }
-  });
-
-  let unchangedUsers = useQuery('User');
+  const user = useQuery('User');
 
   return (
     <View style={styles.container}>
@@ -45,22 +32,22 @@ export default function SettingsScreen({ navigation }) {
             return;
           }
 
-          console.log("Delete all users")
-          realm.write(() => {
-            realm.delete(unchangedUsers);
-          });
-
-          console.log("Creating user")
-          realm.write(() => {
-            realm.create('User', {
-              height: heightInt,
-              weight: weightInt,
-              _id: Realm.BSON.ObjectId(),
+          if (user) {
+            console.log("Updating user")
+            realm.write(() => {
+              user[0].height = heightInt;
+              user[0].weight = weightInt;
             });
-          });
-          realm.objects('User').forEach((user) => {
-            console.log('user: ', user);
-          });
+          } else {
+            console.log("Creating user")
+            realm.write(() => {
+              realm.create('User', {
+                height: heightInt,
+                weight: weightInt,
+                _id: Realm.BSON.ObjectId(),
+              });
+            });
+          }
         }
         } />
       </View>

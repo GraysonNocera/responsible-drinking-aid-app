@@ -2,13 +2,15 @@ import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
 import { useEffect, useState, useRef } from 'react';
 import bluetoothReceiver from '../services/bluetoothReceiver';
 import React from 'react';
+import { useRealm } from '@realm/react';
 import { filter, timeInterval } from 'rxjs';
 import { BluetoothMessages } from '../services/bluetoothReceiver';
-import { setNotification } from '../services/notifications';
+import { minutesToMillis, setNotification } from '../services/notifications';
 import { cancelScheduledNotificationAsync } from 'expo-notifications';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { callEmergencyServices } from '../services/emergencycontact';
-import { MILLIS_TO_SECONDS, SECONDS_TO_MINUTES, NOTIFICATION_AFTER_DRINK, NOTIFICATION_AFTER_ETHANOL, WIDMARK_CONSTANT, GRAMS_PER_DRINK, WIDMARK_MEN_FACTOR } from '../constants';
+import * as Constants from '../constants';
+import { calculateRiskFactor, calculateWidmark } from '../services/riskFactor';
 
 export default function Home({ navigation }) {
   const [ethanol, setEthanol] = useState(0);
@@ -16,8 +18,11 @@ export default function Home({ navigation }) {
   const [drinkCount, setDrinkCount] = useState(0);
   const [greeting, setGreeting] = useState('');
   const [riskMessage, setRiskMessage] = useState('');
+  const riskFactor = useRef(0);
   const drinkNotificationId = useRef(null);
   const ethanolNotificationId = useRef(null);
+  const realm = useRealm();
+  const user = realm.objects('User');
 
   useEffect(() => {
     let bl = bluetoothReceiver.getInstance();
@@ -43,14 +48,14 @@ export default function Home({ navigation }) {
     ).subscribe(
       (value, interval) => {
         console.log('interval', interval);
-        if (interval > MILLIS_TO_SECONDS * SECONDS_TO_MINUTES * NOTIFICATION_AFTER_ETHANOL) {
+        if (interval > minutesToMillis(Constants.NOTIFICATION_AFTER_ETHANOL)) {
           // Widmark formula because it has been 30 minutes since getting an ethanol reading
           // 100 * (mass of alcohol in grams) / (body weight in grams * Widmark factor)
-          // 0.7 - men
-          // 0.6 - women
+
           // TODO: fix up settings page to write to realm
-          let widmark = WIDMARK_CONSTANT * (drinkCount * GRAMS_PER_DRINK) / (1 * WIDMARK_MEN_FACTOR);
+          let widmark = calculateWidmark(drinkCount, user[0].isMale, user[0].weight);
           setEthanol(widmark);
+          riskFactor.current = calculateRiskFactor(widmark, drinkCount, user[0].height, user[0].weight, user[0].isMale);
         }
       }
     );
@@ -74,7 +79,7 @@ export default function Home({ navigation }) {
       if (value === BluetoothMessages.addDrink) {
         setDrinkCount(drinkCount + 1);
         cancelScheduledNotificationAsync(drinkNotificationId);
-        drinkNotificationId.current = setNotification('Drink', 'You recently consumed a drink! Please use the BAC sensor', SECONDS_TO_MINUTES * NOTIFICATION_AFTER_DRINK);
+        drinkNotificationId.current = setNotification('Drink', 'You recently consumed a drink! Please use the BAC sensor', Constants.SECONDS_TO_MINUTES * Constants.NOTIFICATION_AFTER_DRINK);
       } else if (value === BluetoothMessages.removeDrink) {
         setDrinkCount(drinkCount - 1);
         cancelScheduledNotificationAsync(drinkNotificationId);

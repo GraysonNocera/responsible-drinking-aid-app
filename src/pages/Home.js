@@ -3,12 +3,12 @@ import { useEffect, useState, useRef } from 'react';
 import bluetoothReceiver from '../services/bluetoothReceiver';
 import React from 'react';
 import { useRealm } from '@realm/react';
-import { filter, timeInterval } from 'rxjs';
-import { BluetoothMessages } from '../services/bluetoothReceiver';
-import { minutesToMillis, setNotification } from '../services/notifications';
+import { filter } from 'rxjs';
+import { setNotification } from '../services/notifications';
 import { cancelScheduledNotificationAsync } from 'expo-notifications';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { callEmergencyServices } from '../services/emergencycontact';
+import { BluetoothMessages } from '../constants';
 import * as Constants from '../constants';
 import { calculateRiskFactor, calculateWidmark } from '../services/riskFactor';
 
@@ -18,6 +18,7 @@ export default function Home({ navigation }) {
   const [drinkCount, setDrinkCount] = useState(0);
   const [greeting, setGreeting] = useState('');
   const [riskMessage, setRiskMessage] = useState('');
+  const sensorOn = useRef(false); // ethanol sensor
   const riskFactor = useRef(0);
   const drinkNotificationId = useRef(null);
   const ethanolNotificationId = useRef(null);
@@ -30,7 +31,7 @@ export default function Home({ navigation }) {
     
     bluetoothMonitor.pipe(
       filter((value) => {
-        return value.startsWith(BluetoothMessages.ethanol);
+        return value.startsWith(BluetoothMessages.ethanol) && sensorOn.current;
       })
     ).subscribe(
       (value) => {
@@ -73,6 +74,17 @@ export default function Home({ navigation }) {
       }
     });
     
+    bluetoothMonitor.pipe(
+      filter((value) => {
+        return value.startsWith(BluetoothMessages.ethanolSensorOn) || value.startsWith(BluetoothMessages.ethanolSensorOff);
+      })
+    ).subscribe((value) => {
+      if (value === BluetoothMessages.ethanolSensorOn) {
+        sensorOn.current = true;
+      } else if (value === BluetoothMessages.ethanolSensorOff) {
+        sensorOn.current = false;
+      }
+    });
   }, []);
 
 
@@ -166,13 +178,6 @@ export default function Home({ navigation }) {
         <TouchableOpacity
           onPress={() => {
             navigation.navigate('Settings');
-            // realm.write(() => {
-            //   realm.create('User', {
-            //     height: 100,
-            //     weight: 100,
-            //     _id: Realm.BSON.ObjectId(),
-            //   });
-            // });
           }}
         >
           <Icon name="cog" size={40} color='#2196F3' />

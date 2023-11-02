@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import LocationService from '../services/location';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { callEmergencyServices, callLovedOne, messageLovedOne } from '../services/emergencycontact';

@@ -2,8 +2,9 @@ import { BleManager } from 'react-native-ble-plx';
 import { Buffer } from 'buffer';
 import { setNotification } from '../services/notifications';
 import { Characteristic } from 'react-native-ble-plx';
-import { Observable, concatMap, share } from 'rxjs';
+import { Observable, concatMap, share, of } from 'rxjs';
 import * as Location from 'expo-location';
+import { BluetoothMessages } from '../constants';
 
 // Observations about Bluetooth:
 // - The device must be paired with the phone before it can be connected to
@@ -16,14 +17,6 @@ import * as Location from 'expo-location';
 //    data streams for each type of data we receive (button press, heart rate, bac, etc.)
 // - We will have to connect the monitor to I think a hook in our app so that the UI can update when we 
 //    receive new data
-
-export const BluetoothMessages = {
-	drink: "Drink Consumed",
-	heart: "Heart Rate",
-	ethanol: "BAC",
-  ethanolNotification: "ethanolNotification",
-  battery: "Bat",
-}
 
 export default class BluetoothReceiver {
 
@@ -50,18 +43,7 @@ export default class BluetoothReceiver {
     this.observable = null; // the observable that we will use to receive data from the device
   }
 
-  setHooks(setDrinkCount, setEthanol, setHeartRate) {
-    this.setDrinkCount = setDrinkCount;
-    this.setEthanol = setEthanol;
-    this.setHeartRate = setHeartRate;
-  }
-
-  setTimerHooks(notificationId, setnotificationId) {
-    this.notificationId = notificationId
-    this.setnotificationId = setnotificationId
-  }
-
-  initializeBluetooth() {
+  initializeBluetooth(virtualStream=null) {
     if (this.device) {
       return;
     }
@@ -75,6 +57,11 @@ export default class BluetoothReceiver {
 
     let connect = permissions
     .pipe(concatMap((permissions) => {
+      if (virtualStream) {
+        console.log('Using virtual stream, return true')
+        return of(true);
+      }
+
       if (permissions.status == 'granted') {
         console.log('Location permissions granted');
 
@@ -110,6 +97,11 @@ export default class BluetoothReceiver {
     let monitor = connect
     .pipe(concatMap((connect) => {
       console.log('Connect: ', connect)
+
+      if (virtualStream) {
+        console.log('Using virtual stream, return virtual stream for monitor')
+        return virtualStream;
+      }
 
       if (connect) { 
         console.log('Connected to bluetooth device');

@@ -1,12 +1,28 @@
-import { StyleSheet, Text, View, Button, TextInput, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Button } from 'react-native';
+import { useEffect, useState } from 'react';
 import React from 'react';
+import Realm from 'realm';
 import Icon from 'react-native-vector-icons/FontAwesome';
-
+import { useQuery, useRealm } from '@realm/react';
 
 export default function SettingsScreen({ navigation }) {
-  const [weight, setWeight] = useState(-1);
-  const [height, setHeight] = useState(-1);
+  const [weight, onWeightChange] = useState(-1);
+  const [height, onHeightChange] = useState(-1);
+  const realm = useRealm();
+  let users;
+  useEffect(() => {
+    users = realm.objects('User');
+    if (users && users.length > 1) {
+      console.log('users', users);
+      // realm.write(() => {
+      //   realm.delete(users);
+      // });
+    } else {
+      users = [{height: 0, weight: 0}];
+    }
+  });
+
+  let unchangedUsers = useQuery('User');
 
   return (
     <View style={styles.container}>
@@ -14,16 +30,47 @@ export default function SettingsScreen({ navigation }) {
         <Text style={styles.userInfoText}>User Information</Text>
       </View>
       <View style={styles.bodyContainer}>
-        <TextInput inputMode="text" placeholder="Height" />
-        <TextInput inputMode="text" placeholder="Weight" />
+        <TextInput inputMode="text" placeholder="Height" onChangeText={onHeightChange} />
+        <TextInput inputMode="text" placeholder="Weight" onChangeText={onWeightChange} />
+        <Button title="Save Height and Weight" onPress={() => {
+          console.log('Save Height and Weight');
+          let heightInt = parseInt(height);
+          let weightInt = parseInt(weight);
+          if (heightInt < 0 || weightInt < 0) {
+            console.log('Invalid height or weight');
+            return;
+          }
+          if (isNaN(heightInt) || isNaN(weightInt)) {
+            console.log('Invalid height or weight');
+            return;
+          }
+
+          console.log("Delete all users")
+          realm.write(() => {
+            realm.delete(unchangedUsers);
+          });
+
+          console.log("Creating user")
+          realm.write(() => {
+            realm.create('User', {
+              height: heightInt,
+              weight: weightInt,
+              _id: Realm.BSON.ObjectId(),
+            });
+          });
+          realm.objects('User').forEach((user) => {
+            console.log('user: ', user);
+          });
+        }
+        } />
       </View>
-        <View style={styles.homeButtonContainer}>
-          <TouchableOpacity
-          onPress={() => navigation.navigate('Home')} 
-          >
-            <Icon name="home" size={40} color='#2196F3' />
-          </TouchableOpacity>
-        </View>
+      <View style={styles.homeButtonContainer}>
+        <TouchableOpacity
+        onPress={() => navigation.navigate('Home')} 
+        >
+          <Icon name="home" size={40} color='#2196F3' />
+        </TouchableOpacity>
+      </View>
     </View>
     
   )

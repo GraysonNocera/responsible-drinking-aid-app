@@ -8,6 +8,7 @@ export class User extends Realm.Object {
       _id: 'objectId',
       height: 'int', // in inches
       weight: 'int', // in pounds
+      emergencyContacts: 'EmergencyContact[]',
     },
     primaryKey: '_id',
   };

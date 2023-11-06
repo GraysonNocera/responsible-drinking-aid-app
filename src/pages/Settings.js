@@ -8,15 +8,27 @@ import { useQuery, useRealm } from '@realm/react';
 export default function SettingsScreen({ navigation }) {
   const [weight, onWeightChange] = useState(-1);
   const [height, onHeightChange] = useState(-1);
+
+  const [emergencyContact1Name, onEmergencyContact1NameChange] = useState('');
+  const [emergencyContact1Phone, onEmergencyContact1PhoneChange] = useState('');
+  const [emergencyContact2Name, onEmergencyContact2NameChange] = useState('');
+  const [emergencyContact2Phone, onEmergencyContact2PhoneChange] = useState('');
+  const [emergencyContact3Name, onEmergencyContact3NameChange] = useState('');
+  const [emergencyContact3Phone, onEmergencyContact3PhoneChange] = useState('');
+  const [emergencyContact4Name, onEmergencyContact4NameChange] = useState('');
+  const [emergencyContact4Phone, onEmergencyContact4PhoneChange] = useState('');
+  const [emergencyContact5Name, onEmergencyContact5NameChange] = useState('');
+  const [emergencyContact5Phone, onEmergencyContact5PhoneChange] = useState('');
+
   const realm = useRealm();
   let users;
   useEffect(() => {
     users = realm.objects('User');
     if (users && users.length > 1) {
       console.log('users', users);
-      // realm.write(() => {
-      //   realm.delete(users);
-      // });
+      realm.write(() => {
+        realm.delete(users);
+      });
     } else {
       users = [{height: 0, weight: 0}];
     }
@@ -32,10 +44,32 @@ export default function SettingsScreen({ navigation }) {
       <View style={styles.bodyContainer}>
         <TextInput inputMode="text" placeholder="Height" onChangeText={onHeightChange} />
         <TextInput inputMode="text" placeholder="Weight" onChangeText={onWeightChange} />
+        <TextInput inputMode="text" placeholder="Emergency Contact 1 Name" onChangeText={onEmergencyContact1NameChange} />
+        <TextInput inputMode="text" placeholder="Emergency Contact 1 Phone" onChangeText={onEmergencyContact1PhoneChange} />
+        <TextInput inputMode="text" placeholder="Emergency Contact 2 Name" onChangeText={onEmergencyContact2NameChange} />
+        <TextInput inputMode="text" placeholder="Emergency Contact 2 Phone" onChangeText={onEmergencyContact2PhoneChange} />
+        <TextInput inputMode="text" placeholder="Emergency Contact 3 Name" onChangeText={onEmergencyContact3NameChange} />
+        <TextInput inputMode="text" placeholder="Emergency Contact 3 Phone" onChangeText={onEmergencyContact3PhoneChange} />
+        <TextInput inputMode="text" placeholder="Emergency Contact 4 Name" onChangeText={onEmergencyContact4NameChange} />
+        <TextInput inputMode="text" placeholder="Emergency Contact 4 Phone" onChangeText={onEmergencyContact4PhoneChange} />
+        <TextInput inputMode="text" placeholder="Emergency Contact 5 Name" onChangeText={onEmergencyContact5NameChange} />
+        <TextInput inputMode="text" placeholder="Emergency Contact 5 Phone" onChangeText={onEmergencyContact5PhoneChange} />
+        
         <Button title="Save Height and Weight" onPress={() => {
           console.log('Save Height and Weight');
           let heightInt = parseInt(height);
           let weightInt = parseInt(weight);
+          let ec1n = emergencyContact1Name
+          let ec1p = emergencyContact1Phone
+          let ec2n = emergencyContact1Name
+          let ec2p = emergencyContact1Phone
+          let ec3n = emergencyContact1Name
+          let ec3p = emergencyContact1Phone
+          let ec4n = emergencyContact1Name
+          let ec4p = emergencyContact1Phone
+          let ec5n = emergencyContact1Name
+          let ec5p = emergencyContact1Phone
+
           if (heightInt < 0 || weightInt < 0) {
             console.log('Invalid height or weight');
             return;
@@ -52,11 +86,20 @@ export default function SettingsScreen({ navigation }) {
 
           console.log("Creating user")
           realm.write(() => {
-            realm.create('User', {
+            const user = realm.create('User', {
               height: heightInt,
-              weight: weightInt,
+              weight: weightInt, 
               _id: Realm.BSON.ObjectId(),
             });
+
+            const numContacts = 5;
+
+            for (let i = 1; i <= numContacts; i++) {
+              user.emergencyContacts.push({
+                name: `ec${i}n`,
+                phoneNumber: `ec${i}p`,
+              });
+            }
           });
           realm.objects('User').forEach((user) => {
             console.log('user: ', user);

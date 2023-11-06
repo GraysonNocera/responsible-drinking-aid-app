@@ -176,13 +176,13 @@ export default function Home({ navigation }) {
         <TouchableOpacity
           onPress={() => {
             navigation.navigate('Settings');
-            // realm.write(() => {
-            //   realm.create('User', {
-            //     height: 100,
-            //     weight: 100,
-            //     _id: Realm.BSON.ObjectId(),
-            //   });
-            // });
+            realm.write(() => {
+              realm.create('User', {
+                height: 100,
+                weight: 100,
+                _id: Realm.BSON.ObjectId(),
+              });
+            });
           }}
         >
           <Icon name="cog" size={40} color='#2196F3' />

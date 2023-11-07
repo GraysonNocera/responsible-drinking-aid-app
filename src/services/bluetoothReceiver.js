@@ -1,5 +1,8 @@
 import { BleManager } from 'react-native-ble-plx';
 import { Buffer } from 'buffer';
+import { Characteristic } from 'react-native-ble-plx';
+import { Observable, concatMap, share, of, catchError } from 'rxjs';
+import * as Location from 'expo-location';
 
 // Observations about Bluetooth:
 // - The device must be paired with the phone before it can be connected to
@@ -12,14 +15,6 @@ import { Buffer } from 'buffer';
 //    data streams for each type of data we receive (button press, heart rate, bac, etc.)
 // - We will have to connect the monitor to I think a hook in our app so that the UI can update when we 
 //    receive new data
-
-const BluetoothMessages = {
-	drink: "Drink Consumed",
-	heart: "Heart Rate",
-	ethanol: "BAC",
-  ethanolNotification: "ethanolNotification",
-  // error messages
-}
 
 export default class BluetoothReceiver {
 
@@ -43,86 +38,105 @@ export default class BluetoothReceiver {
     this.serviceUUID = 'FFE0'; // service UUID for HM19
     this.characteristicUUID = 'FFE1'; // characteristic UUID for HM19
     this.deviceName = 'DSD TECH'; // name of the device we are connecting to
+    this.observable = null; // the observable that we will use to receive data from the device
   }
 
-  setHooks(setDrinkCount, setEthanol, setHeartRate) {
-    this.setDrinkCount = setDrinkCount;
-    this.setEthanol = setEthanol;
-    this.setHeartRate = setHeartRate;
-  }
-
-  initializeBluetooth() {
+  initializeBluetooth(virtualStream=null) {
     if (this.device) {
-      return
-    }
-
-    try {
-      this.manager.startDeviceScan([this.serviceUUID, this.characteristicUUID], null, async (error, device) => {
-        if (error) {
-          console.error('Error scanning for devices:', error);
-          return;
-        }
-
-        console.log('Found device:', device.name);
-        this.manager.stopDeviceScan();
-
-        if (device.name == this.deviceName) {
-          console.log('Found our device!');
-          this.device = device;
-          await this.device.connect();
-          console.log('Connected to device!');
-          await this.device.discoverAllServicesAndCharacteristics();
-          console.log('Discovered all services and characteristics!');
-          // const characteristic = await this.device.readCharacteristicForService(this.serviceUUID, this.characteristicUUID);
-          // console.log('Read characteristic:', characteristic.value);
-          this.manager.monitorCharacteristicForDevice(this.device.id, this.serviceUUID, this.characteristicUUID, this.receiveData);
-        }
-
-      });
-    } catch (error) {
-      console.error('Bluetooth initialization error:', error);
-    }
-  }
-
-  receiveData(error, char) {
-    if (error) {
-      console.error('Error monitoring characteristic:', error);
       return;
     }
 
-    // Types of data that we can receive:
-    // - Drink number button press
-    // - Heart rate
-    // - Ethanol level
-    // - Ethanol notification
-    // - error messages
-    const receivedData = Buffer.from(char.value, 'base64').toString('ascii');
-    console.log('Received data:', receivedData);
+    let permissions = new Observable((subscriber) => {
+      Location.getForegroundPermissionsAsync().then((permissions) => {
+        subscriber.next(permissions);
+        subscriber.complete();
+      });
+    });
 
-    switch (receivedData) {
-      case BluetoothMessages.drink:
-        console.log('Received drink button press');
-        BluetoothReceiver.instance.setDrinkCount(drinkCount => drinkCount + 1);
-        // write to realm
-        break;
-      case BluetoothMessages.ethanolNotification:
-        console.log('Received ethanol notification');
-        // Notify user that they should use ethanol sensor
-        break;
-      case receivedData.startsWith(BluetoothMessages.heart):
-        console.log('Received heart rate');
-        BluetoothReceiver.instance.setHeartRate(receivedData.split(':')[1].parseInt());
-        // write to realm
-        break;
-      case receivedData.startsWith(BluetoothMessages.ethanol):
-        console.log('Received ethanol level');
-        BluetoothReceiver.instance.setEthanol(receivedData.split(':')[1].parseInt());
-        // write to realm
-        break;
-      default:
-        console.log('Received unknown data: ', receivedData);
-        break;
-    }
+    let connect = permissions
+    .pipe(concatMap((permissions) => {
+      if (virtualStream) {
+        console.log('Using virtual stream, return true')
+        return of(true);
+      }
+
+      if (permissions.status == 'granted') {
+        console.log('Location permissions granted');
+
+        return new Observable((subscriber) => {
+          this.manager.startDeviceScan([this.serviceUUID, this.characteristicUUID], null, async (error, device) => {
+            if (error) {
+              console.log('Error scanning for devices:', error);
+              subscriber.error(error);
+            }
+
+            console.log('Found device:', device.name);
+            this.manager.stopDeviceScan();
+
+            if (device.name == this.deviceName) {
+              console.log('Found our device!');
+              this.device = device;
+              await this.device.connect();
+              console.log('Connected to device!');
+              await this.device.discoverAllServicesAndCharacteristics();
+              console.log('Discovered all services and characteristics!');
+              subscriber.next(true);
+              subscriber.complete();
+            }
+          });
+        });
+      } else {
+        return new Observable((subscriber) => {
+          subscriber.error('Cannot connect because location permissions not granted');
+        });
+      }
+    }));
+
+    let monitor = connect
+    .pipe(concatMap((connect) => {
+      console.log('Connect: ', connect)
+
+      if (virtualStream) {
+        console.log('Using virtual stream, return virtual stream for monitor')
+        return virtualStream;
+      }
+
+      if (connect) { 
+        console.log('Connected to bluetooth device');
+        return new Observable((subscriber) => {
+          this.manager.monitorCharacteristicForDevice(this.device.id, this.serviceUUID, this.characteristicUUID, (error, char) => {
+            if (error) {
+              subscriber.error(error);
+            }
+            subscriber.next(Buffer.from(char.value, 'base64').toString('ascii').trim());
+          })
+        });
+      } else {
+        console.log('Not connected to bluetooth device')
+        return new Observable((subscriber) => {
+          subscriber.error('Cannot monitor because not connected to bluetooth device');
+        });
+      }
+    }), 
+    catchError((error) => {
+      console.log('Error:', error);
+      return of(error);
+    }),
+    share());
+
+    console.log('Monitor: ', monitor)
+
+    return monitor;
+  }
+
+  convertToCharacteristic(value) {
+    // Convert string to react-native-ble-plx Characteristic
+
+    let c = new Characteristic();
+    c.value = Buffer.from(value).toString('base64')
+    c.manager = BluetoothReceiver.instance.manager
+
+    return c
   }
 
   disconnectDevice() {

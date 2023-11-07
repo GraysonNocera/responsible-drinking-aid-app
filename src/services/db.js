@@ -1,13 +1,8 @@
-import {createRealmContext} from '@realm/react';
 import { Session } from '../model/Session';
 import { User } from '../model/User';
-import Realm from 'realm';
+import { EmergencyContact } from '../model/EmergencyContact';
 
 // Create a configuration object
-const realmConfig = {
-  schema: [Session, User],
+export default {
+  schema: [Session, User, EmergencyContact],
 };
-
-// Create a realm context
-const {RealmProvider, useRealm, useObject, useQuery} =
-  createRealmContext(realmConfig);

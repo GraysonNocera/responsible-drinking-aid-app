@@ -1,6 +1,7 @@
 {
   "expo": {
-    "name": "responsible-drinking-aid-app",
+    "owner": "responsible-drinking-aid",
+    "name": "responsible-drinking-aid",
     "slug": "responsible-drinking-aid-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -35,11 +36,6 @@
     },
     "plugins": [
       "@config-plugins/react-native-ble-plx"
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "9b32f4b5-33a4-4f85-9b57-5d5b7b585496"
-      }
-    }
+    ]
   }
 }

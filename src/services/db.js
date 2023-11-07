@@ -1,10 +1,8 @@
 import { Session } from '../model/Session';
 import { User } from '../model/User';
-import Realm from 'realm';
+import { EmergencyContact } from '../model/EmergencyContact';
 
 // Create a configuration object
 export default {
-  schema: [Session, User],
+  schema: [Session, User, EmergencyContact],
 };
-
-// Realm.deleteFile({ schema: [Session, User] });

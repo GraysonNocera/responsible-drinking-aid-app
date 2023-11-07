@@ -51,7 +51,7 @@ export default function Emergency({ navigation }) {
     try {
       const response = await fetch(
         // API Key hard coded in; TO-DO: fix
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyA2OTG15BTsh6oVQWmdS6j4UOBj_BMfMnw`
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=GOOGLEAPIKEYHERE`
       );
       const data = await response.json();
       if (data.results && data.results.length > 0) {

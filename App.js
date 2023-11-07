@@ -2,39 +2,26 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import 'expo-dev-client';
 import { RealmProvider } from '@realm/react';
-import React, { Component } from 'react';
+import React, { Component, useEffect } from 'react';
 import Home from './src/pages/Home';
 import Settings from './src/pages/Settings';
 import Emergency from './src/pages/Emergency';
 import Dev from './src/pages/Dev';
 import { setupNotifications } from './src/services/notifications';
 import realmConfig from './src/services/db.js'
-import { LogBox } from 'react-native';
 import bluetoothReceiver from './src/services/bluetoothReceiver';
-
-LogBox.ignoreLogs(['`new NativeEventEmitter()`']); // Ignore log notification by message
 
 const Stack = createNativeStackNavigator();
 
-export default class App extends Component {
+export default function App() {
   // TODO - ask user for location permissions (otherwise bluetooth fails)
   // TODO - bluetooth here or on home screen?
 
-  componentDidMount() {
-
-    let bl = bluetoothReceiver.getInstance();
-    let result = bl.initializeBluetooth();
-    result.subscribe(console.log);
-
-    let res2 = bl.initializeBluetooth();
-    res2.subscribe(console.log);
-
-    // Setup notifications
+  useEffect(() => {
     setupNotifications();
-  }
+  }, []);
 
-  render() {
-    return (
+  return (
       <RealmProvider {...realmConfig}>
         <NavigationContainer>
           <Stack.Navigator initialRouteName="Home">
@@ -45,6 +32,5 @@ export default class App extends Component {
           </Stack.Navigator>
         </NavigationContainer>
       </RealmProvider>
-    );
-  }
+  );
 }

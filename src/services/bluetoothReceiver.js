@@ -1,10 +1,8 @@
 import { BleManager } from 'react-native-ble-plx';
 import { Buffer } from 'buffer';
-import { setNotification } from '../services/notifications';
 import { Characteristic } from 'react-native-ble-plx';
-import { Observable, concatMap, share, of } from 'rxjs';
+import { Observable, concatMap, share, of, catchError } from 'rxjs';
 import * as Location from 'expo-location';
-import { BluetoothMessages } from '../constants';
 
 // Observations about Bluetooth:
 // - The device must be paired with the phone before it can be connected to
@@ -119,63 +117,16 @@ export default class BluetoothReceiver {
           subscriber.error('Cannot monitor because not connected to bluetooth device');
         });
       }
-    }), share());
+    }), 
+    catchError((error) => {
+      console.log('Error:', error);
+      return of(error);
+    }),
+    share());
 
     console.log('Monitor: ', monitor)
 
     return monitor;
-  }
-
-  receiveData(error, char) {
-    if (error) {
-      console.error('Error monitoring characteristic:', error);
-      return;
-    }
-
-    // Types of data that we can receive:
-    // - Drink number button press
-    // - Heart rate
-    // - Ethanol level
-    // - Ethanol notification
-    // - error messages
-    const receivedData = Buffer.from(char.value, 'base64').toString('ascii').trim();
-    console.log('Received data:', receivedData);
-    
-    if (receivedData.startsWith(BluetoothMessages.heart)) {
-      console.log('Received heart rate');
-      BluetoothReceiver.instance.setHeartRate(parseInt(receivedData.split(':')[1]));
-    } else if (receivedData.startsWith(BluetoothMessages.ethanol)) {
-      console.log('Received ethanol level');
-      const eth = parseInt(receivedData.split(':')[1]);
-
-      // TODO: find some threshold below which we consider it to just be noise
-      if (eth > 20) {
-        BluetoothReceiver.instance.setEthanol(eth);
-      }
-
-      // Clear previous interval and start new one that goes off in 30 minutes
-      
-      clearInterval(BluetoothReceiver.instance.notificationId);
-      BluetoothReceiver.instance.setnotificationId(setTimeout(() => {
-        setNotification('Drink Alert', 'Please if you have any decencies stop drinking alcohol');
-      }, 1000 * 10));
-
-    } else if (receivedData == BluetoothMessages.drink) {
-      // console.log('Received drink button press');
-      BluetoothReceiver.instance.setDrinkCount(drinkCount => drinkCount + 1);
-      // Clear previous interval and start new one that goes off in 30 minutes
-      clearInterval(BluetoothReceiver.instance.notificationId);
-      BluetoothReceiver.instance.setnotificationId(setNotification('Drink Alert', 'You just consumed a drink', 1));
-
-    } else if (receivedData == BluetoothMessages.ethanolNotification) {
-      console.log('Received ethanol notification');
-      // Notify user that they should use ethanol sensor
-    } else if (receivedData.startsWith(BluetoothMessages.battery)) {
-      console.log('Received battery level');
-      // TODO - update battery level
-    } else {
-      console.log('Received unknown data:', receivedData);
-    }
   }
 
   convertToCharacteristic(value) {

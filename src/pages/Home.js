@@ -35,11 +35,11 @@ export default function Home({ navigation }) {
       })
     ).subscribe(
       (value) => {
-        let ethanol = value.split(':')[1];
+        const ethanol = value.split(':')[1];
         setEthanol(ethanol);
         ethanolNotificationId.current = setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, 60 * 30);
         setTimeout(() => {
-          let widmark = calculateWidmark(drinkCount, user[0].isMale, user[0].weight);
+          const widmark = calculateWidmark(drinkCount, user[0].isMale, user[0].weight);
           setEthanol(widmark);
           riskFactor.current = calculateRiskFactor(widmark, drinkCount, user[0].height, user[0].weight, user[0].isMale);
         }, Constants.minutesToMillis(Constants.NOTIFICATION_AFTER_ETHANOL));
@@ -52,7 +52,7 @@ export default function Home({ navigation }) {
       }
     )).subscribe(
       (value) => {
-        let heartRate = value.split(':')[1];
+        const heartRate = value.split(':')[1];
         setHeartRate(heartRate);
       }
     );

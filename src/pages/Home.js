@@ -7,7 +7,9 @@ import { BluetoothMessages } from '../constants';
 import { setNotification } from '../services/notifications';
 import { cancelScheduledNotificationAsync } from 'expo-notifications';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { callEmergencyServices } from '../services/emergencycontact';
+import { callEmergencyServices } from '../services/emergencyContact';
+import { useRealm } from '@realm/react';
+import Realm from 'realm';
 import { MILLIS_TO_SECONDS, SECONDS_TO_MINUTES, NOTIFICATION_AFTER_DRINK, NOTIFICATION_AFTER_ETHANOL, WIDMARK_CONSTANT, GRAMS_PER_DRINK, WIDMARK_MEN_FACTOR } from '../constants';
 
 export default function Home({ navigation }) {
@@ -18,6 +20,8 @@ export default function Home({ navigation }) {
   const [riskMessage, setRiskMessage] = useState('');
   const drinkNotificationId = useRef(null);
   const ethanolNotificationId = useRef(null);
+
+  const realm = useRealm();
 
   useEffect(() => {
     let bl = bluetoothReceiver.getInstance();

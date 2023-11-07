@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import bluetoothReceiver from '../services/bluetoothReceiver';
 import React from 'react';
 import { filter, timeInterval } from 'rxjs';
-import { BluetoothMessages } from '../services/bluetoothReceiver';
+import { BluetoothMessages } from '../constants';
 import { setNotification } from '../services/notifications';
 import { cancelScheduledNotificationAsync } from 'expo-notifications';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -29,7 +29,7 @@ export default function Home({ navigation }) {
       })
     ).subscribe(
       (value) => {
-        let ethanol = value.split(':')[1];
+        const ethanol = value.split(':')[1];
         setEthanol(ethanol);
         ethanolNotificationId.current = setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, 60 * 30);
       }
@@ -49,7 +49,7 @@ export default function Home({ navigation }) {
           // 0.7 - men
           // 0.6 - women
           // TODO: fix up settings page to write to realm
-          let widmark = WIDMARK_CONSTANT * (drinkCount * GRAMS_PER_DRINK) / (1 * WIDMARK_MEN_FACTOR);
+          const widmark = WIDMARK_CONSTANT * (drinkCount * GRAMS_PER_DRINK) / (1 * WIDMARK_MEN_FACTOR);
           setEthanol(widmark);
         }
       }
@@ -61,7 +61,7 @@ export default function Home({ navigation }) {
       }
     )).subscribe(
       (value) => {
-        let heartRate = value.split(':')[1];
+        const heartRate = value.split(':')[1];
         setHeartRate(heartRate);
       }
     );

@@ -2,7 +2,7 @@ import { BleManager } from 'react-native-ble-plx';
 import { Buffer } from 'buffer';
 import { setNotification } from '../services/notifications';
 import { Characteristic } from 'react-native-ble-plx';
-import { Observable, concatMap, share, of } from 'rxjs';
+import { Observable, concatMap, share, of, catchError } from 'rxjs';
 import * as Location from 'expo-location';
 import { BluetoothMessages } from '../constants';
 
@@ -119,7 +119,12 @@ export default class BluetoothReceiver {
           subscriber.error('Cannot monitor because not connected to bluetooth device');
         });
       }
-    }), share());
+    }), 
+    catchError((error) => {
+      console.log('Error:', error);
+      return of(error);
+    }),
+    share());
 
     console.log('Monitor: ', monitor)
 

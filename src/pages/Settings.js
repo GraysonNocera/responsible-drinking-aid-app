@@ -61,6 +61,14 @@ export default function SettingsScreen({ navigation }) {
           let ec5n = emergencyContact1Name
           let ec5p = emergencyContact1Phone
 
+          const ecNames = [ec1n, ec2n, ec3n, ec4n, ec5n]; // Define your existing variables
+          const ecPhones = [ec1p, ec2p, ec3p, ec4p, ec5p]; // Define phone numbers
+          
+          // const ecNames = ['ec1n', 'ec2n', 'ec3n', 'ec4n', 'ec5n']; // Define your existing variables
+          // const ecPhones = ['ec1p', 'ec2p', 'ec3p', 'ec4p', 'ec5p']; // Define phone numbers
+
+          const numContacts = Math.min(ecNames.length, 5);
+
           if (heightInt < 0 || weightInt < 0) {
             console.log('Invalid height or weight');
             return;
@@ -77,15 +85,38 @@ export default function SettingsScreen({ navigation }) {
               user[0].weight = weightInt;
               user[0].isMale = isMale;
             });
+            for (let i = 0; i < 1; i++) {
+              if (ecNames[i] !== null) {
+                realm.write(() => {
+                  user[0].emergencyContacts[i].name = ecNames[i];
+                  user[0].emergencyContacts[i].phoneNumber = ecPhones[i];
+                });
+              } else {
+                // Handle the case where ecNames[i] is null or unchanged
+                console.log(`ecNames[${i}] is null or unchanged.`);
+              }
+            }
           } else {
             console.log("Creating user")
             realm.write(() => {
-              realm.create('User', {
+              const user = realm.create('User', {
                 height: heightInt,
                 weight: weightInt,
                 isMale: isMale,
                 _id: Realm.BSON.ObjectId(),
               });
+
+              for (let i = 0; i < numContacts; i++) {
+                if (ecNames[i] !== null) {
+                  user.emergencyContacts.push({
+                    name: ecNames[i],
+                    phoneNumber: ecPhones[i],
+                  });
+                } else {
+                  // Handle the case where ecNames[i] is null or unchanged
+                  console.log(`ecNames[${i}] is null or unchanged.`);
+                }
+              }
             });
           }
         }

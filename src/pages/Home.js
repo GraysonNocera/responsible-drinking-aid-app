@@ -6,7 +6,7 @@ import { useRealm } from '@realm/react';
 import { filter } from 'rxjs';
 import { setNotification, cancelNotification } from '../services/notifications';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { callEmergencyServices } from '../services/emergencyContact';
+import { callEmergencyServices, messageLovedOne } from '../services/emergencyContact';
 import { BluetoothMessages } from '../constants';
 import * as Constants from '../constants';
 import { calculateRiskFactor, calculateWidmark } from '../services/riskFactor';
@@ -26,6 +26,14 @@ export default function Home({ navigation }) {
   const ethanolCalculationTimeoutId = useRef(null);
   const realm = useRealm();
   const user = realm.objects('User');
+
+  try {
+    const defaultEmergencyPhone = user[0].emergencyContacts[0].phoneNumber;
+    console.log('Default emergency phone number: ', defaultEmergencyPhone);
+  } catch (error) {
+    // Handle the exception, e.g., by logging an error message
+    console.log('No default emergency phone number');
+  }
 
   useEffect(() => {
     let bl = bluetoothReceiver.getInstance();
@@ -127,6 +135,7 @@ export default function Home({ navigation }) {
       newRiskMessage = 'Medium risk';
     } else if (bac > 20) {
       newRiskMessage = 'High risk';
+      messageLovedOne(defaultEmergencyPhone, '')
     }
 
     setRiskMessage(newRiskMessage);
@@ -179,10 +188,6 @@ export default function Home({ navigation }) {
           </View>
         </View>
       </View>
-        <Button title="Settings"
-        onPress={() => {
-          navigation.navigate('Settings')
-        }} />
 
       {/* eslint-disable-next-line no-undef */}
       { __DEV__ &&

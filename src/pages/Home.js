@@ -30,18 +30,30 @@ export default function Home({ navigation }) {
   useEffect(() => {
     let bl = bluetoothReceiver.getInstance();
     let bluetoothMonitor = bl.initializeBluetooth();
+
+    bluetoothMonitor.subscribe(
+      (value) => {
+        console.log('value: ', value);
+      },
+      (error) => {
+        console.log('error: ', error);
+      },
+      () => {
+        console.log('complete');
+      }
+    )
     
     bluetoothMonitor.pipe(
       filter((value) => {
         return value.startsWith(BluetoothMessages.ethanol) && sensorOn.current;
       })
     ).subscribe(
-      (value) => {
+      async (value) => {
         const ethanol = value.split(':')[1].trim();
         setEthanol(ethanol);
         
-        cancelNotification(ethanolNotificationId.current);
-        ethanolNotificationId.current = setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, 60 * 30);
+        await cancelNotification(ethanolNotificationId.current);
+        ethanolNotificationId.current = await setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, 60 * 30);
 
         clearTimeout(ethanolCalculationTimeoutId.current);
         ethanolCalculationTimeoutId.current = setTimeout(() => {
@@ -67,12 +79,12 @@ export default function Home({ navigation }) {
       filter((value) => {
         return [BluetoothMessages.addDrink, BluetoothMessages.subtractDrink, BluetoothMessages.clearDrinks].includes(value);
       })
-    ).subscribe((value) => {
+    ).subscribe(async (value) => {
       if (value === BluetoothMessages.addDrink) {
         setDrinkCount((drinkCount) => drinkCount + 1);
         drinkNotificationId.current = setNotification('Drink', 'You recently consumed a drink! Please use the BAC sensor', Constants.SECONDS_TO_MINUTES * Constants.NOTIFICATION_AFTER_DRINK);
       } else if (value === BluetoothMessages.subtractDrink) {
-        cancelNotification(drinkNotificationId.current);
+        await cancelNotification(drinkNotificationId.current);
         setDrinkCount((drinkCount) => (Math.max(drinkCount - 1, 0)));
       } else if (value === BluetoothMessages.clearDrinks) {
         cancelNotification(drinkNotificationId.current);

@@ -13,10 +13,10 @@ export function setupNotifications(shouldShowAlert=true, shouldPlaySound=true, s
 }
 
 // Send notification
-export function setNotification(title, body, when=0) {
+export async function setNotification(title, body, when=0) {
   // time is in seconds
 
-  const id = Notifications.scheduleNotificationAsync({
+  const id = await Notifications.scheduleNotificationAsync({
     content: {
       title: title,
       body: body,
@@ -24,16 +24,12 @@ export function setNotification(title, body, when=0) {
     trigger: { seconds: when },
   });
 
-  return id
+  return Promise.resolve(id);
 }
 
-export function cancelNotification(id) {
+export async function cancelNotification(id) {
   if (id != null) {
-    Notifications.cancelScheduledNotificationAsync(id).then(() => {
-      id = null;
-    }).catch((error) => {
-      console.log(error);
-    });
+    await Notifications.cancelScheduledNotificationAsync(id);
   }
 }
 

@@ -27,6 +27,16 @@ export function setNotification(title, body, when=0) {
   return id
 }
 
+export function cancelNotification(id) {
+  if (id != null) {
+    Notifications.cancelScheduledNotificationAsync(id).then(() => {
+      id = null;
+    }).catch((error) => {
+      console.log(error);
+    });
+  }
+}
+
 export const millisToSeconds = (millis) => {
   return millis / Constants.MILLIS_TO_SECONDS;
 }

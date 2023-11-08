@@ -37,7 +37,7 @@ export default class BluetoothReceiver {
     this.device = null; // the device we are connected to
     this.serviceUUID = 'FFE0'; // service UUID for HM19
     this.characteristicUUID = 'FFE1'; // characteristic UUID for HM19
-    this.deviceName = 'DSD TECH'; // name of the device we are connecting to
+    this.deviceName = 'RDA477'; // name of the device we are connecting to
     this.observable = null; // the observable that we will use to receive data from the device
   }
 

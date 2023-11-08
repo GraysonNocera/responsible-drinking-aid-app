@@ -8,6 +8,7 @@ import { useQuery, useRealm } from '@realm/react';
 export default function SettingsScreen({ navigation }) {
   const [weight, onWeightChange] = useState(-1);
   const [height, onHeightChange] = useState(-1);
+  const [gender, onGenderChange] = useState('');
 
   const [emergencyContact1Name, onEmergencyContact1NameChange] = useState('');
   const [emergencyContact1Phone, onEmergencyContact1PhoneChange] = useState('');
@@ -31,6 +32,7 @@ export default function SettingsScreen({ navigation }) {
       <View style={styles.bodyContainer}>
         <TextInput inputMode="text" placeholder="Height" onChangeText={onHeightChange} />
         <TextInput inputMode="text" placeholder="Weight" onChangeText={onWeightChange} />
+        <TextInput inputMode="text" placeholder="Gender" onChangeText={onGenderChange} />
         <TextInput inputMode="text" placeholder="Emergency Contact 1 Name" onChangeText={onEmergencyContact1NameChange} />
         <TextInput inputMode="text" placeholder="Emergency Contact 1 Phone" onChangeText={onEmergencyContact1PhoneChange} />
         <TextInput inputMode="text" placeholder="Emergency Contact 2 Name" onChangeText={onEmergencyContact2NameChange} />
@@ -42,10 +44,12 @@ export default function SettingsScreen({ navigation }) {
         <TextInput inputMode="text" placeholder="Emergency Contact 5 Name" onChangeText={onEmergencyContact5NameChange} />
         <TextInput inputMode="text" placeholder="Emergency Contact 5 Phone" onChangeText={onEmergencyContact5PhoneChange} />
         
-        <Button title="Save Height and Weight" onPress={() => {
+        <Button title="Save Height, Weight, and Gender" onPress={() => {
           console.log('Save Height and Weight');
           let heightInt = parseInt(height);
           let weightInt = parseInt(weight);
+          let isMale = gender === "Male" ? true : false;
+
           let ec1n = emergencyContact1Name
           let ec1p = emergencyContact1Phone
           let ec2n = emergencyContact1Name
@@ -66,11 +70,12 @@ export default function SettingsScreen({ navigation }) {
             return;
           }
 
-          if (user) {
+          if (user.length == 1) {
             console.log("Updating user")
             realm.write(() => {
               user[0].height = heightInt;
               user[0].weight = weightInt;
+              user[0].isMale = isMale;
             });
           } else {
             console.log("Creating user")
@@ -78,6 +83,7 @@ export default function SettingsScreen({ navigation }) {
               realm.create('User', {
                 height: heightInt,
                 weight: weightInt,
+                isMale: isMale,
                 _id: Realm.BSON.ObjectId(),
               });
             });

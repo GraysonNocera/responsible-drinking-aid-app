@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import LocationService from '../services/location';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { callEmergencyServices, callLovedOne, messageLovedOne } from '../services/emergencycontact';
+import { callEmergencyServices, callLovedOne, messageLovedOne } from '../services/emergencyContact';
 
 export default function Emergency({ navigation }) {
   const [currentLocation, setCurrentLocation] = useState(null);

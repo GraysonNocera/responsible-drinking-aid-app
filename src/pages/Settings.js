@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Button } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import React from 'react';
 import Realm from 'realm';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -8,6 +8,7 @@ import { useQuery, useRealm } from '@realm/react';
 export default function SettingsScreen({ navigation }) {
   const [weight, onWeightChange] = useState(-1);
   const [height, onHeightChange] = useState(-1);
+  const [gender, onGenderChange] = useState('');
 
   const [emergencyContact1Name, onEmergencyContact1NameChange] = useState('');
   const [emergencyContact1Phone, onEmergencyContact1PhoneChange] = useState('');
@@ -21,20 +22,7 @@ export default function SettingsScreen({ navigation }) {
   const [emergencyContact5Phone, onEmergencyContact5PhoneChange] = useState('');
 
   const realm = useRealm();
-  let users;
-  useEffect(() => {
-    users = realm.objects('User');
-    if (users && users.length > 1) {
-      console.log('users', users);
-      realm.write(() => {
-        realm.delete(users);
-      });
-    } else {
-      users = [{height: 0, weight: 0}];
-    }
-  });
-
-  let unchangedUsers = useQuery('User');
+  const user = useQuery('User');
 
   return (
     <View style={styles.container}>
@@ -44,6 +32,7 @@ export default function SettingsScreen({ navigation }) {
       <View style={styles.bodyContainer}>
         <TextInput inputMode="text" placeholder="Height" onChangeText={onHeightChange} />
         <TextInput inputMode="text" placeholder="Weight" onChangeText={onWeightChange} />
+        <TextInput inputMode="text" placeholder="Gender" onChangeText={onGenderChange} />
         <TextInput inputMode="text" placeholder="Emergency Contact 1 Name" onChangeText={onEmergencyContact1NameChange} />
         <TextInput inputMode="text" placeholder="Emergency Contact 1 Phone" onChangeText={onEmergencyContact1PhoneChange} />
         <TextInput inputMode="text" placeholder="Emergency Contact 2 Name" onChangeText={onEmergencyContact2NameChange} />
@@ -55,10 +44,12 @@ export default function SettingsScreen({ navigation }) {
         <TextInput inputMode="text" placeholder="Emergency Contact 5 Name" onChangeText={onEmergencyContact5NameChange} />
         <TextInput inputMode="text" placeholder="Emergency Contact 5 Phone" onChangeText={onEmergencyContact5PhoneChange} />
         
-        <Button title="Save Height and Weight" onPress={() => {
+        <Button title="Save Height, Weight, and Gender" onPress={() => {
           console.log('Save Height and Weight');
           let heightInt = parseInt(height);
           let weightInt = parseInt(weight);
+          let isMale = gender === "Male" ? true : false;
+
           let ec1n = emergencyContact1Name
           let ec1p = emergencyContact1Phone
           let ec2n = emergencyContact1Name
@@ -79,31 +70,24 @@ export default function SettingsScreen({ navigation }) {
             return;
           }
 
-          console.log("Delete all users")
-          realm.write(() => {
-            realm.delete(unchangedUsers);
-          });
-
-          console.log("Creating user")
-          realm.write(() => {
-            const user = realm.create('User', {
-              height: heightInt,
-              weight: weightInt, 
-              _id: Realm.BSON.ObjectId(),
+          if (user.length == 1) {
+            console.log("Updating user")
+            realm.write(() => {
+              user[0].height = heightInt;
+              user[0].weight = weightInt;
+              user[0].isMale = isMale;
             });
-
-            const numContacts = 5;
-
-            for (let i = 1; i <= numContacts; i++) {
-              user.emergencyContacts.push({
-                name: `ec${i}n`,
-                phoneNumber: `ec${i}p`,
+          } else {
+            console.log("Creating user")
+            realm.write(() => {
+              realm.create('User', {
+                height: heightInt,
+                weight: weightInt,
+                isMale: isMale,
+                _id: Realm.BSON.ObjectId(),
               });
-            }
-          });
-          realm.objects('User').forEach((user) => {
-            console.log('user: ', user);
-          });
+            });
+          }
         }
         } />
       </View>

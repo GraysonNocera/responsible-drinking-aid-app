@@ -1,7 +1,7 @@
-import { BleManager } from 'react-native-ble-plx';
+import { BleErrorCode, BleManager } from 'react-native-ble-plx';
 import { Buffer } from 'buffer';
 import { Characteristic } from 'react-native-ble-plx';
-import { Observable, concatMap, share, of, catchError } from 'rxjs';
+import { Observable, concatMap, share, of, catchError, filter } from 'rxjs';
 import * as Location from 'expo-location';
 
 // Observations about Bluetooth:
@@ -37,7 +37,7 @@ export default class BluetoothReceiver {
     this.device = null; // the device we are connected to
     this.serviceUUID = 'FFE0'; // service UUID for HM19
     this.characteristicUUID = 'FFE1'; // characteristic UUID for HM19
-    this.deviceName = 'DSD TECH'; // name of the device we are connecting to
+    this.deviceName = 'RDA477'; // name of the device we are connecting to
     this.observable = null; // the observable that we will use to receive data from the device
   }
 
@@ -106,9 +106,15 @@ export default class BluetoothReceiver {
         return new Observable((subscriber) => {
           this.manager.monitorCharacteristicForDevice(this.device.id, this.serviceUUID, this.characteristicUUID, (error, char) => {
             if (error) {
-              subscriber.error(error);
+              if (error.errorCode == BleErrorCode.DeviceDisconnected) {
+                console.log('Device disconnected');
+                subscriber.complete();
+              } else {
+                subscriber.error(error);
+              }
+            } else {
+              subscriber.next(Buffer.from(char.value, 'base64').toString('ascii').trim());
             }
-            subscriber.next(Buffer.from(char.value, 'base64').toString('ascii').trim());
           })
         });
       } else {
@@ -121,6 +127,9 @@ export default class BluetoothReceiver {
     catchError((error) => {
       console.log('Error:', error);
       return of(error);
+    }),
+    filter((value) => {
+      return value != null && typeof value == 'string';
     }),
     share());
 

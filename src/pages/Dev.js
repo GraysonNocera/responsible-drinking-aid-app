@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View, Button, TextInput } from 'react-native';
 import { useRef } from 'react';
 import bluetoothReceiver from '../services/bluetoothReceiver';
-import { Subject, merge } from 'rxjs';
+import { Subject, merge, map, filter, interval, share } from 'rxjs';
 
 export default function Dev({ navigation }) {
   const [heartRate, onChangeHeartRate] = React.useState('');
@@ -54,3 +54,36 @@ export default function Dev({ navigation }) {
     </View>
   );
 }
+
+const values = [
+  "Add Drink",
+  "Subtract Drink",
+  "Ethanol Sensor On",
+  "BAC",
+  "Heart Rate",
+]
+const getRandomMessage = () => {
+  const index = Math.floor(Math.random() * values.length);
+
+  if (values[index] === "BAC") {
+    const retVal = values[index].concat(':').concat((Math.random()).toString());
+    console.log(retVal)
+    return retVal;
+  } else if (values[index] === "Heart Rate") {
+    const retVal = values[index].concat(':').concat((Math.random() * 100).toString());
+    console.log(retVal)
+    return retVal;
+  }
+  console.log(values[index])
+  return values[index];
+}
+
+console.log("Dev Menu".startsWith("Dev"))
+
+export const virtualStream = interval(1000 * 2).pipe(
+  map(() => getRandomMessage()),
+  filter((value) => {
+    return typeof value === 'string';
+  }),
+  share(),
+)

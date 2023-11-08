@@ -2,15 +2,16 @@ import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
 import { useEffect, useState, useRef } from 'react';
 import bluetoothReceiver from '../services/bluetoothReceiver';
 import React from 'react';
-import { filter, timeInterval } from 'rxjs';
-import { BluetoothMessages } from '../constants';
-import { setNotification } from '../services/notifications';
-import { cancelScheduledNotificationAsync } from 'expo-notifications';
+import { useRealm } from '@realm/react';
+import { filter } from 'rxjs';
+import { setNotification, cancelNotification } from '../services/notifications';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { callEmergencyServices } from '../services/emergencyContact';
-import { useRealm } from '@realm/react';
-import Realm from 'realm';
-import { MILLIS_TO_SECONDS, SECONDS_TO_MINUTES, NOTIFICATION_AFTER_DRINK, NOTIFICATION_AFTER_ETHANOL, WIDMARK_CONSTANT, GRAMS_PER_DRINK, WIDMARK_MEN_FACTOR } from '../constants';
+import { BluetoothMessages } from '../constants';
+import * as Constants from '../constants';
+import { calculateRiskFactor, calculateWidmark } from '../services/riskFactor';
+import { virtualStream } from './Dev';
+import { minutesToMillis } from '../services/notifications';
 
 export default function Home({ navigation }) {
   const [ethanol, setEthanol] = useState(0);
@@ -18,75 +19,90 @@ export default function Home({ navigation }) {
   const [drinkCount, setDrinkCount] = useState(0);
   const [greeting, setGreeting] = useState('');
   const [riskMessage, setRiskMessage] = useState('');
+  const sensorOn = useRef(false); // ethanol sensor
+  const riskFactor = useRef(0);
   const drinkNotificationId = useRef(null);
   const ethanolNotificationId = useRef(null);
-
+  const ethanolCalculationTimeoutId = useRef(null);
   const realm = useRealm();
+  const user = realm.objects('User');
 
   useEffect(() => {
     let bl = bluetoothReceiver.getInstance();
     let bluetoothMonitor = bl.initializeBluetooth();
+
+    bluetoothMonitor.subscribe(
+      (value) => {
+        console.log('value: ', value);
+      },
+      (error) => {
+        console.log('error: ', error);
+      },
+      () => {
+        console.log('complete');
+      }
+    )
     
     bluetoothMonitor.pipe(
       filter((value) => {
-        return value.startsWith(BluetoothMessages.ethanol);
+        return value.startsWith(BluetoothMessages.ethanol) && sensorOn.current;
       })
     ).subscribe(
-      (value) => {
-        const ethanol = value.split(':')[1];
+      async (value) => {
+        const ethanol = value.split(':')[1].trim();
         setEthanol(ethanol);
-        ethanolNotificationId.current = setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, 60 * 30);
-      }
-    );
-  
-    bluetoothMonitor.pipe(
-      filter((value) => {
-        return value.startsWith(BluetoothMessages.ethanol);
-      }),
-      timeInterval()
-    ).subscribe(
-      (value, interval) => {
-        console.log('interval', interval);
-        if (interval > MILLIS_TO_SECONDS * SECONDS_TO_MINUTES * NOTIFICATION_AFTER_ETHANOL) {
-          // Widmark formula because it has been 30 minutes since getting an ethanol reading
-          // 100 * (mass of alcohol in grams) / (body weight in grams * Widmark factor)
-          // 0.7 - men
-          // 0.6 - women
-          // TODO: fix up settings page to write to realm
-          const widmark = WIDMARK_CONSTANT * (drinkCount * GRAMS_PER_DRINK) / (1 * WIDMARK_MEN_FACTOR);
+        
+        await cancelNotification(ethanolNotificationId.current);
+        ethanolNotificationId.current = await setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, 60 * 30);
+
+        clearTimeout(ethanolCalculationTimeoutId.current);
+        ethanolCalculationTimeoutId.current = setTimeout(() => {
+          const widmark = calculateWidmark(drinkCount, user[0].isMale, user[0].weight);
           setEthanol(widmark);
-        }
+          riskFactor.current = calculateRiskFactor(widmark, drinkCount, user[0].height, user[0].weight, user[0].isMale);
+        }, minutesToMillis(Constants.NOTIFICATION_AFTER_ETHANOL));
       }
     );
   
     bluetoothMonitor.pipe(
       filter((value) => {
-        return value.startsWith(BluetoothMessages.heartRate);
+        return value && value.startsWith(BluetoothMessages.heartRate);
       }
     )).subscribe(
       (value) => {
-        const heartRate = value.split(':')[1];
+        const heartRate = value.split(':')[1].trim();
         setHeartRate(heartRate);
       }
     );
   
     bluetoothMonitor.pipe(
       filter((value) => {
-        return value in [BluetoothMessages.addDrink, BluetoothMessages.removeDrink, BluetoothMessages.clearDrinks];
+        return [BluetoothMessages.addDrink, BluetoothMessages.subtractDrink, BluetoothMessages.clearDrinks].includes(value);
       })
-    ).subscribe((value) => {
+    ).subscribe(async (value) => {
       if (value === BluetoothMessages.addDrink) {
-        setDrinkCount(drinkCount + 1);
-        cancelScheduledNotificationAsync(drinkNotificationId);
-        drinkNotificationId.current = setNotification('Drink', 'You recently consumed a drink! Please use the BAC sensor', SECONDS_TO_MINUTES * NOTIFICATION_AFTER_DRINK);
-      } else if (value === BluetoothMessages.removeDrink) {
-        setDrinkCount(drinkCount - 1);
-        cancelScheduledNotificationAsync(drinkNotificationId);
+        setDrinkCount((drinkCount) => drinkCount + 1);
+        drinkNotificationId.current = setNotification('Drink', 'You recently consumed a drink! Please use the BAC sensor', Constants.SECONDS_TO_MINUTES * Constants.NOTIFICATION_AFTER_DRINK);
+      } else if (value === BluetoothMessages.subtractDrink) {
+        await cancelNotification(drinkNotificationId.current);
+        setDrinkCount((drinkCount) => (Math.max(drinkCount - 1, 0)));
       } else if (value === BluetoothMessages.clearDrinks) {
+        cancelNotification(drinkNotificationId.current);
         setDrinkCount(0);
       }
     });
     
+    bluetoothMonitor.pipe(
+      filter((value) => {
+        return value.startsWith(BluetoothMessages.ethanolSensorOn) || value.startsWith(BluetoothMessages.ethanolSensorOff);
+      })
+    ).subscribe((value) => {
+      if (value === BluetoothMessages.ethanolSensorOn) {
+        sensorOn.current = true;
+      } else if (value === BluetoothMessages.ethanolSensorOff) {
+        sensorOn.current = false;
+      }
+    });
   }, []);
 
 
@@ -180,13 +196,6 @@ export default function Home({ navigation }) {
         <TouchableOpacity
           onPress={() => {
             navigation.navigate('Settings');
-            realm.write(() => {
-              realm.create('User', {
-                height: 100,
-                weight: 100,
-                _id: Realm.BSON.ObjectId(),
-              });
-            });
           }}
         >
           <Icon name="cog" size={40} color='#2196F3' />

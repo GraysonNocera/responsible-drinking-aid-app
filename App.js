@@ -2,14 +2,16 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import 'expo-dev-client';
 import { RealmProvider } from '@realm/react';
-import React, { Component, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import Home from './src/pages/Home';
 import Settings from './src/pages/Settings';
 import Emergency from './src/pages/Emergency';
 import Dev from './src/pages/Dev';
 import { setupNotifications } from './src/services/notifications';
 import realmConfig from './src/services/db.js'
-import bluetoothReceiver from './src/services/bluetoothReceiver';
+import { LogBox } from 'react-native';
+
+LogBox.ignoreLogs(['new NativeEventEmitter()']);
 
 const Stack = createNativeStackNavigator();
 

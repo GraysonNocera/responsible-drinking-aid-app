@@ -135,7 +135,7 @@ export default function Home({ navigation }) {
       newRiskMessage = 'Medium risk';
     } else if (bac > 20) {
       newRiskMessage = 'High risk';
-      messageLovedOne(defaultEmergencyPhone, '')
+      messageLovedOne(defaultEmergencyPhone, '') // TODO: location?
     }
 
     setRiskMessage(newRiskMessage);

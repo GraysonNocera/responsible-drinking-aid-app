@@ -12,6 +12,7 @@ import * as Constants from '../constants';
 import { calculateRiskFactor, calculateWidmark } from '../services/riskFactor';
 import { virtualStream } from './Dev';
 import { minutesToMillis } from '../services/notifications';
+import LocationService from '../services/location';
 
 export default function Home({ navigation }) {
   const [ethanol, setEthanol] = useState(0);
@@ -27,15 +28,67 @@ export default function Home({ navigation }) {
   const realm = useRealm();
   const user = realm.objects('User');
 
-  try {
-    const defaultEmergencyPhone = user[0].emergencyContacts[0].phoneNumber;
-    console.log('Default emergency phone number: ', defaultEmergencyPhone);
-  } catch (error) {
-    // Handle the exception, e.g., by logging an error message
-    console.log('No default emergency phone number');
-  }
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [formattedAddress, setFormattedAddress] = useState('');
+
+  const [defaultEmergencyPhone, setDefaultEmergencyPhone] = useState(null);
 
   useEffect(() => {
+    LocationService.init();
+  }, []);
+
+  const fetchFormattedAddress = async (latitude, longitude) => {
+    try {
+      const response = await fetch(
+        // API Key hard coded in; TO-DO: fix
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=GOOGLEAPIKEYHERE`
+      );
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        const address = data.results[0].formatted_address;
+        setFormattedAddress(address);
+      }
+    } catch (error) {
+      console.error(`Error fetching address: ${error}`);
+    }
+  };
+
+  const updateCurrentLocation = () => {
+    LocationService.getCurrentLocation(
+      (location) => {
+        console.log(location)
+        setCurrentLocation(location);
+        
+      },
+      (error) => {
+        console.error(`Error getting location: ${error}`);
+      }
+    );
+  };
+
+  useEffect(() => {
+    updateCurrentLocation();
+  }, []);
+
+  useEffect(() => {
+    if (currentLocation) {
+      fetchFormattedAddress(currentLocation.latitude, currentLocation.longitude);
+    }
+  }, [currentLocation]);
+
+  useEffect(() => {
+    try {
+      const phone = user[0].emergencyContacts[0].phoneNumber;
+      console.log('Default emergency phone number: ', phone);
+      setDefaultEmergencyPhone(phone);
+    } catch (error) {
+      // Handle the exception, e.g., by logging an error message
+      console.log('No default emergency phone number');
+    }
+  }, [])
+
+  useEffect(() => {
+
     let bl = bluetoothReceiver.getInstance();
     let bluetoothMonitor = bl.initializeBluetooth();
 
@@ -133,22 +186,26 @@ export default function Home({ navigation }) {
 
     if (bac > 10 && bac <= 20) {
       newRiskMessage = 'Medium risk';
-    } else if (bac > 20) {
+    } else if (bac > -5) {
       newRiskMessage = 'High risk';
-      messageLovedOne(defaultEmergencyPhone, '') // TODO: location?
     }
 
     setRiskMessage(newRiskMessage);
   }, [ethanol]); 
 
   let riskContainerColor;
+  let riskTextColor;
   if (riskMessage === 'Low risk') {
     riskContainerColor = 'green';
+    riskTextColor = 'white;'
   } else if (riskMessage === 'Medium risk') {
     riskContainerColor = 'yellow';
+    riskTextColor = 'black;'
   } else if (riskMessage === 'High risk') {
     riskContainerColor = 'red';
+    riskTextColor = 'white;'
   }
+
 
   return (
     <View style={styles.container}>
@@ -156,7 +213,7 @@ export default function Home({ navigation }) {
         <Text style={styles.greetingText}>{greeting}</Text>
       </View>
       <View style={[styles.riskContainer, { backgroundColor: riskContainerColor }]}>
-        <Text style={styles.riskText}>{riskMessage}</Text>
+        <Text style={[styles.riskText, {color: 'white'}]}>{riskMessage}</Text>
       </View>
       
       <View style={styles.dataContainer}>
@@ -187,6 +244,15 @@ export default function Home({ navigation }) {
             <Text style={styles.dataValue}>{drinkCount}</Text>
           </View>
         </View>
+        {riskMessage === 'High risk' && (
+          <TouchableOpacity
+            style={styles.highRiskButton} // Define styles for the button
+            onPress={() => {messageLovedOne(defaultEmergencyPhone, formattedAddress)}}
+              // TODO: send a message
+          >
+            <Text style={styles.highRiskButtonText}>Text my emergency contact</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* eslint-disable-next-line no-undef */}
@@ -206,10 +272,15 @@ export default function Home({ navigation }) {
           <Icon name="cog" size={40} color='#2196F3' />
         </TouchableOpacity>
       </View>
-      <Button title="Emergency Contact Options"
-        onPress={() => {
-          navigation.navigate('Emergency')
-        }} />
+      <View style={styles.contactButtonContainer}>
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate('Emergency');
+          }}
+        >
+          <Icon name="phone" size={40} color='#2196F3' />
+        </TouchableOpacity>
+      </View>
       <TouchableOpacity style={styles.emergencyButton} onPress={() => callEmergencyServices()}>
         <Text style={styles.emergencyButtonText}>Call Emergency Services</Text>
       </TouchableOpacity>
@@ -283,6 +354,11 @@ const styles = StyleSheet.create({
     bottom: 20,
     right: 20
   },
+  contactButtonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20
+  },
   emergencyButton: {
     backgroundColor: 'red',
     padding: 16,
@@ -314,5 +390,19 @@ const styles = StyleSheet.create({
   },
   dataValue: {
     fontSize: 16,
+  },
+  highRiskButton: {
+    backgroundColor: 'red',
+    padding: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  highRiskButtonText: {
+    fontSize: 18,
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

@@ -3,11 +3,19 @@ import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import LocationService from '../services/location';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { callEmergencyServices, callLovedOne, messageLovedOne } from '../services/emergencyContact';
+import { useRealm } from '@realm/react';
 
 export default function Emergency({ navigation }) {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [formattedAddress, setFormattedAddress] = useState('');
   // console.log(`Initial current   location: ` + currentLocation)
+
+  const realm = useRealm();
+  const user = realm.objects('User');
+
+  let emergencyContacts = user[0].emergencyContacts;
+
+  console.log(emergencyContacts)
   
   useEffect(() => {
     LocationService.init();
@@ -35,15 +43,6 @@ export default function Emergency({ navigation }) {
       fetchFormattedAddress(currentLocation.latitude, currentLocation.longitude);
     }
   }, [currentLocation]);
-
-  // delete this later, this should be dynamic
-  const contacts = [
-    { name: 'Charlie', phoneNumber: '123-456-7890' },
-    { name: 'Patty', phoneNumber: '123-456-7890' },
-    { name: 'Linus', phoneNumber: '123-456-7890' },
-    { name: 'Woodstock', phoneNumber: '123-456-7890' },
-    { name: 'Snoopy', phoneNumber: '123-456-7890' },
-  ];
 
   // console.log(`Updated current location: ` + currentLocation.latitude + ', ' + currentLocation.longitude)
 
@@ -80,7 +79,7 @@ export default function Emergency({ navigation }) {
         <Text style={styles.emergencyButtonText}>Call Emergency Services</Text>
       </TouchableOpacity>
 
-      {contacts.map((contact, index) => (
+      {emergencyContacts.map((contact, index) => (
         <View key={index} style={styles.contactContainer}>
           <View style={styles.contactInfo}>
             <Text style={styles.contactName}>{contact.name}</Text>

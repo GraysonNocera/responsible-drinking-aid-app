@@ -52,14 +52,14 @@ export default function SettingsScreen({ navigation }) {
 
           let ec1n = emergencyContact1Name
           let ec1p = emergencyContact1Phone
-          let ec2n = emergencyContact1Name
-          let ec2p = emergencyContact1Phone
-          let ec3n = emergencyContact1Name
-          let ec3p = emergencyContact1Phone
-          let ec4n = emergencyContact1Name
-          let ec4p = emergencyContact1Phone
-          let ec5n = emergencyContact1Name
-          let ec5p = emergencyContact1Phone
+          let ec2n = emergencyContact2Name
+          let ec2p = emergencyContact2Phone
+          let ec3n = emergencyContact3Name
+          let ec3p = emergencyContact3Phone
+          let ec4n = emergencyContact4Name
+          let ec4p = emergencyContact4Phone
+          let ec5n = emergencyContact5Name
+          let ec5p = emergencyContact5Phone
 
           const ecNames = [ec1n, ec2n, ec3n, ec4n, ec5n]; // Define your existing variables
           const ecPhones = [ec1p, ec2p, ec3p, ec4p, ec5p]; // Define phone numbers
@@ -85,8 +85,8 @@ export default function SettingsScreen({ navigation }) {
               user[0].weight = weightInt;
               user[0].isMale = isMale;
             });
-            for (let i = 0; i < 1; i++) {
-              if (ecNames[i] !== null) {
+            for (let i = 0; i < 5; i++) {
+              if (ecNames[i] !== "") {
                 realm.write(() => {
                   user[0].emergencyContacts[i].name = ecNames[i];
                   user[0].emergencyContacts[i].phoneNumber = ecPhones[i];
@@ -107,7 +107,7 @@ export default function SettingsScreen({ navigation }) {
               });
 
               for (let i = 0; i < numContacts; i++) {
-                if (ecNames[i] !== null) {
+                if (ecNames[i] !== "") {
                   user.emergencyContacts.push({
                     name: ecNames[i],
                     phoneNumber: ecPhones[i],

@@ -14,6 +14,33 @@ import { virtualStream } from './Dev';
 import { minutesToMillis } from '../services/notifications';
 import LocationService from '../services/location';
 
+export const useUserUpdate = (realm) => {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+
+    try {
+      const users = realm.objects('User');
+
+      setUser(users);
+
+      const handleChange = () => {
+        setUser(users);
+      };
+
+      users.addListener(handleChange);
+
+      return () => {
+        users.removeAllListeners();
+      };
+    } catch (error) {
+      console.error('Error using Realm for user data:', error);
+    }
+  }, [realm]);
+
+  return user;
+};
+
 export default function Home({ navigation }) {
   const [ethanol, setEthanol] = useState(0);
   const [heartRate, setHeartRate] = useState(0);
@@ -26,7 +53,8 @@ export default function Home({ navigation }) {
   const ethanolNotificationId = useRef(null);
   const ethanolCalculationTimeoutId = useRef(null);
   const realm = useRealm();
-  const user = realm.objects('User');
+  // const user = realm.objects('User');
+  const user = useUserUpdate(realm);
 
   const [currentLocation, setCurrentLocation] = useState(null);
   const [formattedAddress, setFormattedAddress] = useState('');

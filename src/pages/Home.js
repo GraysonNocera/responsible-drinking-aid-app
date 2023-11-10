@@ -1,13 +1,10 @@
 import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
-import { useEffect, useState, useRef } from 'react';
 import React from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { callEmergencyServices } from '../services/emergencyContact';
 import useBluetooth from '../services/useBluetooth';
 
 export default function Home({ navigation }) {
-  const [greeting, setGreeting] = useState('');
-  const [riskMessage, setRiskMessage] = useState('');
   const { 
     devices,
     connectedDevice,
@@ -33,40 +30,48 @@ export default function Home({ navigation }) {
     }
   }
 
-  useEffect(() => {
-    // Good {morning/afternoon/evening!}
+  const getGreeting = () => {
     const now = new Date();
     const currentHour = now.getHours();
 
-    let newGreeting = 'Good morning!';
+    let greeting = 'Good morning!';
     if (currentHour >= 12 && currentHour < 18) {
-      newGreeting = 'Good afternoon!';
+      greeting = 'Good afternoon!';
     } else if (currentHour >= 18) {
-      newGreeting = 'Good evening!';
+      greeting = 'Good evening!';
     }
 
-    setGreeting(newGreeting);
-
-    const bac = ethanol; 
-    let newRiskMessage = 'Low risk';
-
-    if (bac > 10 && bac <= 20) {
-      newRiskMessage = 'Medium risk';
-    } else if (bac > 20) {
-      newRiskMessage = 'High risk';
-    }
-
-    setRiskMessage(newRiskMessage);
-  }, [ethanol]); 
-
-  let riskContainerColor;
-  if (riskMessage === 'Low risk') {
-    riskContainerColor = 'green';
-  } else if (riskMessage === 'Medium risk') {
-    riskContainerColor = 'yellow';
-  } else if (riskMessage === 'High risk') {
-    riskContainerColor = 'red';
+    return greeting;
   }
+
+  const getRiskMessage = () => {
+    let riskMessage = 'Low risk';
+    if (ethanol > 10 && ethanol <= 20) {
+      riskMessage = 'Medium risk';
+    } else if (ethanol > 20) {
+      riskMessage = 'High risk';
+    }
+
+    return riskMessage;
+  }
+
+  const getRiskContainerColor = () => {
+    let riskContainerColor;
+    if (riskMessage === 'Low risk') {
+      riskContainerColor = 'green';
+    } else if (riskMessage === 'Medium risk') {
+      riskContainerColor = 'yellow';
+    } else if (riskMessage === 'High risk') {
+      riskContainerColor = 'red';
+    }
+
+    return riskContainerColor;
+  }
+
+
+  let greeting = getGreeting();
+  let riskMessage = getRiskMessage();
+  let riskContainerColor = getRiskContainerColor();
 
   return (
     <View style={styles.container}>

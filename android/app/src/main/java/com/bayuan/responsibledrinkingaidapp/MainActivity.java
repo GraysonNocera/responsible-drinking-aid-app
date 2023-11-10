@@ -1,4 +1,4 @@
-package com.responsibledrinkingaid.responsibledrinkingaidapp;
+package com.bayuan.responsibledrinkingaidapp;
 
 import android.os.Build;
 import android.os.Bundle;

@@ -81,9 +81,9 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace 'com.responsibledrinkingaid.responsibledrinkingaidapp'
+    namespace 'com.bayuan.responsibledrinkingaidapp'
     defaultConfig {
-        applicationId 'com.responsibledrinkingaid.responsibledrinkingaidapp'
+        applicationId 'com.bayuan.responsibledrinkingaidapp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

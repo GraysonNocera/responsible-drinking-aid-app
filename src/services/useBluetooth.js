@@ -10,7 +10,7 @@ import { BluetoothMessages } from "../constants";
 
 const SERVICE_UUID = 'FFE0'; // service UUID for HM19
 const CHARACTERISTIC_UUID = 'FFE1'; // characteristic UUID for HM19
-const DEVICE_NAME = 'DSD TECH'; // name of the device we are connecting to
+const DEVICE_NAME = 'RDA477'; // name of the device we are connecting to
 
 export default function useBluetooth() {
   const manager = useMemo(() => new BleManager(), []);
@@ -34,7 +34,7 @@ export default function useBluetooth() {
     return permissions.granted;
   }
 
-  const scanForDevices = async () => {
+  const scanForDevices = async (callback=null) => {
 
     manager.startDeviceScan([SERVICE_UUID, CHARACTERISTIC_UUID], null, (error, device) => {
       if (error) {
@@ -48,6 +48,9 @@ export default function useBluetooth() {
         console.log('Found our device!');
         console.log("Length of devices: " + devices.length)
         setDevices([...devices, device]);
+        if (callback) {
+          callback(device);
+        }
       }
     });
   }
@@ -84,7 +87,6 @@ export default function useBluetooth() {
     if (!message || message.length == 0 || typeof message != 'string') {
       return;
     }
-    console.log("Received message: " + message)
 
     if (message.startsWith(BluetoothMessages.ethanol) && ethanolSensorOn.current) {
       handleEthanolMessage(message);

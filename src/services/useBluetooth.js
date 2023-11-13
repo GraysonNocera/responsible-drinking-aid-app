@@ -106,13 +106,18 @@ export default function useBluetooth() {
 
   const handleEthanolSensorMessage = (message) => {
     if (message === BluetoothMessages.ethanolSensorOff) {
+      sensorOn.current = false;
       if (ethanolReadings.current.length > 0) {
         setEthanol(Math.max(ethanolReadings.current))
       }
+      
+      ethanolNotificationId.current = setNotification("Breathalyzer is off!", "To record a reading, hold top button for 5 seconds and wait 10 seconds before blowing into it.");
+    } else {
+      sensorOn.current = true;
+      ethanolNotificationId.current = setNotification("Breathalyzer is on!", "Please blow into the breathalyzer to record your BAC level.");
     }
 
     ethanolReadings.current = []
-    sensorOn.current = message == BluetoothMessages.ethanolSensorOn;
   }
 
   const handleAddDrinkMessage = () => {

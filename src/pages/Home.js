@@ -21,12 +21,14 @@ export default function Home({ navigation }) {
     console.log('Connecting to bluetooth')
     if (await requestPermissions()) {
       console.log('Permissions granted')
-      await scanForDevices();
-    }
+      await scanForDevices(async (device) => {
+        if (!device) {
+          return;
+        }
 
-    if (devices.length > 0) {
-      console.log('Connecting to device')
-      await connectToDevice(devices[0]);
+        console.log('Connecting to device')
+        await connectToDevice(device);
+      });
     }
   }
 

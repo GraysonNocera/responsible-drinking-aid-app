@@ -18,6 +18,7 @@ export default function useBluetooth() {
   const [connectedDevice, setConnectedDevice] = useState(null);
   const [heartRate, setHeartRate] = useState(0);
   const [ethanol, setEthanol] = useState(0);
+  const ethanolReadings = useRef([]);
   const ethanolSensorOn = useRef(false);
   const [drinkCount, setDrinkCount] = useState(0);
   const sensorOn = useRef(false); // ethanol sensor
@@ -98,12 +99,19 @@ export default function useBluetooth() {
       handleSubtractDrinkMessage();
     } else if (message.startsWith(BluetoothMessages.clearDrinks)) {
       handleClearDrinksMessage();
-    } else if (message == BluetoothMessages.ethanolSensorOn || message == BluetoothMessages.ethanolSensorOff) {
+    } else if (message === BluetoothMessages.ethanolSensorOn || message === BluetoothMessages.ethanolSensorOff) {
       handleEthanolSensorMessage(message);
     }
   }
 
   const handleEthanolSensorMessage = (message) => {
+    if (message === BluetoothMessages.ethanolSensorOff) {
+      if (ethanolReadings.current.length > 0) {
+        setEthanol(Math.max(ethanolReadings.current))
+      }
+    }
+
+    ethanolReadings.current = []
     sensorOn.current = message == BluetoothMessages.ethanolSensorOn;
   }
 
@@ -124,7 +132,7 @@ export default function useBluetooth() {
 
   const handleEthanolMessage = async (message) => {
     const ethanol = message.split(':')[1].trim();
-    setEthanol(ethanol);
+    ethanolReadings.current.push(parseInt(ethanol));
 
     await cancelNotification(ethanolNotificationId.current);
     ethanolNotificationId.current = await setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, Constants.SECONDS_TO_MINUTES * Constants.NOTIFICATION_AFTER_ETHANOL);

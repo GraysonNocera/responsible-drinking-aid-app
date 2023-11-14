@@ -19,7 +19,6 @@ export default function useBluetooth() {
   const [heartRate, setHeartRate] = useState(0);
   const [ethanol, setEthanol] = useState(0);
   const ethanolReadings = useRef([]);
-  const ethanolSensorOn = useRef(false);
   const [drinkCount, setDrinkCount] = useState(0);
   const drinkCountTimestamps = useRef([]);
   const sensorOn = useRef(false); // ethanol sensor
@@ -90,7 +89,7 @@ export default function useBluetooth() {
       return;
     }
 
-    if (message.startsWith(BluetoothMessages.ethanol) && ethanolSensorOn.current) {
+    if (message.startsWith(BluetoothMessages.ethanol) && sensorOn.current) {
       handleEthanolMessage(message);
     } else if (message.startsWith(BluetoothMessages.heartRate)) {
       handleHeartRateMessage(message);
@@ -123,7 +122,7 @@ export default function useBluetooth() {
 
   const handleAddDrinkMessage = () => {
     setDrinkCount((drinkCount) => drinkCount + 1);
-    drinkCountTimestamps.current.append(new Date());
+    drinkCountTimestamps.current.push(new Date());
     // drinkNotificationId.current = setNotification('Drink', 'You recently consumed a drink! Please use the BAC sensor', Constants.SECONDS_TO_MINUTES * Constants.NOTIFICATION_AFTER_DRINK);
   }
 

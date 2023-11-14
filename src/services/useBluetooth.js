@@ -16,7 +16,6 @@ export default function useBluetooth() {
   const manager = useMemo(() => new BleManager(), []);
   const [devices, setDevices] = useState([]);
   const [connectedDevice, setConnectedDevice] = useState(null);
-  const [heartRate, setHeartRate] = useState(0);
   const [ethanol, setEthanol] = useState(0);
   const ethanolReadings = useRef([]);
   const [drinkCount, setDrinkCount] = useState(0);
@@ -91,8 +90,6 @@ export default function useBluetooth() {
 
     if (message.startsWith(BluetoothMessages.ethanol) && sensorOn.current) {
       handleEthanolMessage(message);
-    } else if (message.startsWith(BluetoothMessages.heartRate)) {
-      handleHeartRateMessage(message);
     } else if (message.startsWith(BluetoothMessages.addDrink)) {
       handleAddDrinkMessage();
     } else if (message.startsWith(BluetoothMessages.subtractDrink)) {
@@ -166,17 +163,6 @@ export default function useBluetooth() {
     }, minutesToMillis(Constants.NOTIFICATION_AFTER_ETHANOL));
   };
 
-  const handleHeartRateMessage = (message) => {
-
-    try {
-      const heartRate = parseInt(message.split(':')[1].trim());
-      setHeartRate(heartRate);
-    } catch {
-      console.log("Error parsing heart rate");
-      return;
-    }
-  }
-
   const disconnectFromDevice = async () => {
     if (connectedDevice) {
       await connectedDevice.cancelConnection();
@@ -187,7 +173,6 @@ export default function useBluetooth() {
   return {
     devices,
     connectedDevice,
-    heartRate,
     ethanol,
     drinkCount,
     riskFactor,

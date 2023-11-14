@@ -4,12 +4,10 @@ import { useRef } from 'react';
 import { Subject, merge, map, filter, interval, share } from 'rxjs';
 
 export default function Dev({ navigation }) {
-  const [heartRate, onChangeHeartRate] = React.useState('');
   const [ethanol, onChangeEthanol] = React.useState('');
   const drinkCount = useRef(0);
   console.log("Dev Menu")
   let drinkObservable = new Subject();
-  let heartRateObservable = new Subject();
   let ethanolObservable = new Subject();
 
   return (
@@ -20,14 +18,7 @@ export default function Dev({ navigation }) {
         drinkCount.current = drinkCount.current + 1;
         drinkObservable.next(true);
       }} />
-
-      <TextInput placeholder="Heart Rate" onChangeText={onChangeHeartRate}/>
       <TextInput placeholder="BAC" onChangeText={onChangeEthanol}/>
-
-      <Button title="Send Heart Rate" onPress={ () => {
-          heartRateObservable.next(heartRate);
-        }
-      } />
 
       <Button title="Send BAC" onPress={ () => {
           ethanolObservable.next(ethanol);
@@ -45,17 +36,12 @@ const values = [
   "Subtract Drink",
   "Ethanol Sensor On",
   "BAC",
-  "Heart Rate",
 ]
 const getRandomMessage = () => {
   const index = Math.floor(Math.random() * values.length);
 
   if (values[index] === "BAC") {
     const retVal = values[index].concat(':').concat((Math.random()).toString());
-    console.log(retVal)
-    return retVal;
-  } else if (values[index] === "Heart Rate") {
-    const retVal = values[index].concat(':').concat((Math.random() * 100).toString());
     console.log(retVal)
     return retVal;
   }

@@ -8,7 +8,6 @@ export const BluetoothMessages = {
   ethanolSensorOff: "Ethanol Sensor OFF", // send notification when we receive this (ethanol sensor off), hold top button for 5 seconds to turn back on
 	ethanol: "BAC",
   // adc: "ADC",
-  heartRate: "Heart Rate",
 }
 
 export const NOTIFICATION_AFTER_DRINK = 20; // in minutes

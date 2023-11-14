@@ -8,7 +8,6 @@ export default function Home({ navigation }) {
   const { 
     devices,
     connectedDevice,
-    heartRate,
     ethanol,
     drinkCount,
     riskFactor,
@@ -95,15 +94,6 @@ export default function Home({ navigation }) {
           <View style={styles.dataTextContainer}>
             <Text style={styles.dataLabel}>Blood Alcohol Content (BAC):</Text>
             <Text style={styles.dataValue}>{ethanol}</Text>
-          </View>
-        </View>
-        <View style={styles.dataItem}>
-          <View style={styles.dataIconContainer}>
-            <Icon name="heartbeat" size={24} color="#FF5733" />
-          </View>
-          <View style={styles.dataTextContainer}>
-            <Text style={styles.dataLabel}>Heart Rate:</Text>
-            <Text style={styles.dataValue}>{heartRate}</Text>
           </View>
         </View>
         <View style={styles.dataItem}>

@@ -2,12 +2,12 @@ export const BluetoothMessages = {
   addDrink: "Add Drink",
   subtractDrink: "Subtract Drink",
   clearDrinks: "Clear Drinks",
-  drinkTimerStart: "Drink Timer Start",
-  drinkTimerReset: "Drink Timer Reset",
-  ethanolSensorOn: "Ethanol Sensor On",
-  ethanolSensorOff: "Ethanol Sensor Off",
+  // drinkTimerStart: "Drink Timer Start",
+  // drinkTimerReset: "Drink Timer Reset",
+  ethanolSensorOn: "Ethanol Sensor ON", // send notification as soon as we receive this asking them to take a BAC reading
+  ethanolSensorOff: "Ethanol Sensor OFF", // send notification when we receive this (ethanol sensor off), hold top button for 5 seconds to turn back on
 	ethanol: "BAC",
-  adc: "ADC",
+  // adc: "ADC",
   heartRate: "Heart Rate",
 }
 

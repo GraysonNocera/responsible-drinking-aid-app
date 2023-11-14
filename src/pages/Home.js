@@ -1,11 +1,8 @@
 import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
-import { useEffect, useState, useRef } from 'react';
-import bluetoothReceiver from '../services/bluetoothReceiver';
 import React from 'react';
-import { useRealm } from '@realm/react';
-import { filter } from 'rxjs';
-import { setNotification, cancelNotification } from '../services/notifications';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import useBluetooth from '../services/useBluetooth';
+
 import { callEmergencyServices, messageLovedOne } from '../services/emergencyContact';
 import { BluetoothMessages } from '../constants';
 import * as Constants from '../constants';
@@ -60,6 +57,18 @@ export default function Home({ navigation }) {
   const [formattedAddress, setFormattedAddress] = useState('');
 
   const [defaultEmergencyPhone, setDefaultEmergencyPhone] = useState(null);
+  
+  const { 
+    devices,
+    connectedDevice,
+    heartRate,
+    ethanol,
+    drinkCount,
+    requestPermissions,
+    scanForDevices,
+    connectToDevice,
+    disconnectFromDevice
+  } = useBluetooth();
 
   useEffect(() => {
     LocationService.init();
@@ -194,51 +203,77 @@ export default function Home({ navigation }) {
     });
   }, []);
 
+  
 
-  useEffect(() => {
-    // Good {morning/afternoon/evening!}
+  const handleConnectToBluetooth = async () => {
+    console.log('Connecting to bluetooth')
+    if (await requestPermissions()) {
+      console.log('Permissions granted')
+      await scanForDevices(async (device) => {
+        if (!device) {
+          return;
+        }
+
+        console.log('Connecting to device')
+        await connectToDevice(device);
+      });
+    }
+  }
+
+  const getGreeting = () => {
     const now = new Date();
     const currentHour = now.getHours();
 
-    let newGreeting = 'Good morning!';
+    let greeting = 'Good morning!';
     if (currentHour >= 12 && currentHour < 18) {
-      newGreeting = 'Good afternoon!';
+      greeting = 'Good afternoon!';
     } else if (currentHour >= 18) {
-      newGreeting = 'Good evening!';
+      greeting = 'Good evening!';
     }
 
-    setGreeting(newGreeting);
-
-    const bac = ethanol; 
-    let newRiskMessage = 'Low risk';
-
-    if (bac > 10 && bac <= 20) {
-      newRiskMessage = 'Medium risk';
-    } else if (bac > -5) {
-      newRiskMessage = 'High risk';
-    }
-
-    setRiskMessage(newRiskMessage);
-  }, [ethanol]); 
-
-  let riskContainerColor;
-  let riskTextColor;
-  if (riskMessage === 'Low risk') {
-    riskContainerColor = 'green';
-    riskTextColor = 'white;'
-  } else if (riskMessage === 'Medium risk') {
-    riskContainerColor = 'yellow';
-    riskTextColor = 'black;'
-  } else if (riskMessage === 'High risk') {
-    riskContainerColor = 'red';
-    riskTextColor = 'white;'
+    return greeting;
   }
 
+  const getRiskMessage = () => {
+    let riskMessage = 'Low risk';
+    if (ethanol > 10 && ethanol <= 20) {
+      riskMessage = 'Medium risk';
+    } else if (ethanol > 20) {
+      riskMessage = 'High risk';
+    }
+
+    return riskMessage;
+  }
+  
+  const riskTextColor = 'white'
+
+  const getRiskContainerColor = () => {
+    let riskContainerColor;
+    if (riskMessage === 'Low risk') {
+      riskContainerColor = 'green';
+    } else if (riskMessage === 'Medium risk') {
+      riskContainerColor = 'yellow';
+    } else if (riskMessage === 'High risk') {
+      riskContainerColor = 'red';
+    }
+    return riskContainerColor;
+  }
+  
+  if (riskMessage === 'Medium risk') {
+    riskTextColor = 'black';
+  }
+
+
+  let greeting = getGreeting();
+  let riskMessage = getRiskMessage();
+  let riskContainerColor = getRiskContainerColor();
 
   return (
     <View style={styles.container}>
       <View style={styles.greetingContainer}>
         <Text style={styles.greetingText}>{greeting}</Text>
+        <Button title="Connect to Bluetooth" onPress={handleConnectToBluetooth} />
+        <Text>{connectedDevice ? "Connected!" : "Disconnected!"}</Text>
       </View>
       <View style={[styles.riskContainer, { backgroundColor: riskContainerColor }]}>
         <Text style={[styles.riskText, {color: 'white'}]}>{riskMessage}</Text>
@@ -285,11 +320,11 @@ export default function Home({ navigation }) {
 
       {/* eslint-disable-next-line no-undef */}
       { __DEV__ &&
-      <Button title="Dev"
-        onPress={() => {
-          navigation.navigate('Dev')
-        }
-      } />
+        <Button title="Dev"
+          onPress={() => {
+            navigation.navigate('Dev')
+          }
+        } />
       }
       <View style={styles.settingsButtonContainer}>
         <TouchableOpacity

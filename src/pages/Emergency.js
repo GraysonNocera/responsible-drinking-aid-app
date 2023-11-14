@@ -13,7 +13,7 @@ export default function Emergency({ navigation }) {
   const realm = useRealm();
   const user = realm.objects('User');
 
-  let emergencyContacts = user[0].emergencyContacts;
+  let emergencyContacts = user[0]?.emergencyContacts;
 
   console.log(emergencyContacts)
   
@@ -46,7 +46,7 @@ export default function Emergency({ navigation }) {
 
   // console.log(`Updated current location: ` + currentLocation.latitude + ', ' + currentLocation.longitude)
 
-  const fetchFormattedAddress = async (latitude, longitude) => {
+  const fetchFormattedAddress = async (latitude, longitude, callback=null) => {
     try {
       const response = await fetch(
         // API Key hard coded in; TO-DO: fix
@@ -56,12 +56,15 @@ export default function Emergency({ navigation }) {
       if (data.results && data.results.length > 0) {
         const address = data.results[0].formatted_address;
         setFormattedAddress(address);
+        if (callback) {
+          callback(address);
+        }
       }
     } catch (error) {
       console.error(`Error fetching address: ${error}`);
     }
   };
-  console.log(formattedAddress)
+  
   return (
     <View style={styles.container}>
       <View style={styles.emergencyContainer}>
@@ -79,7 +82,7 @@ export default function Emergency({ navigation }) {
         <Text style={styles.emergencyButtonText}>Call Emergency Services</Text>
       </TouchableOpacity>
 
-      {emergencyContacts.map((contact, index) => (
+      {emergencyContacts?.map((contact, index) => (
         <View key={index} style={styles.contactContainer}>
           <View style={styles.contactInfo}>
             <Text style={styles.contactName}>{contact.name}</Text>
@@ -95,7 +98,11 @@ export default function Emergency({ navigation }) {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.contactButton}
-              onPress={() => messageLovedOne(contact.phoneNumber, formattedAddress)}
+              onPress={async () => {
+                await fetchFormattedAddress(currentLocation.latitude, currentLocation.longitude, (address) => {
+                  messageLovedOne(contact.phoneNumber, address);
+                });
+              }}
             >
               <Icon name="envelope" size={24} color="#2196F3" />
               <Text style={styles.buttonText}>Message</Text>

@@ -140,7 +140,13 @@ export default function useBluetooth() {
 
   const handleEthanolMessage = async (message) => {
     const ethanol = message.split(':')[1].trim();
-    ethanolReadings.current.push(parseInt(ethanol));
+
+    try {
+      ethanolReadings.current.push(parseInt(ethanol));
+    } catch {
+      console.log("Error parsing ethanol reading");
+      return;
+    }
 
     await cancelNotification(ethanolNotificationId.current);
     // ethanolNotificationId.current = await setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, Constants.SECONDS_TO_MINUTES * Constants.NOTIFICATION_AFTER_ETHANOL);
@@ -154,8 +160,14 @@ export default function useBluetooth() {
   };
 
   const handleHeartRateMessage = (message) => {
-    const heartRate = message.split(':')[1].trim();
-    setHeartRate(heartRate);
+
+    try {
+      const heartRate = parseInt(message.split(':')[1].trim());
+      setHeartRate(heartRate);
+    } catch {
+      console.log("Error parsing heart rate");
+      return;
+    }
   }
 
   const disconnectFromDevice = async () => {

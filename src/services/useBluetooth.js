@@ -124,7 +124,7 @@ export default function useBluetooth() {
   const handleAddDrinkMessage = () => {
     setDrinkCount((drinkCount) => drinkCount + 1);
     drinkCountTimestamps.current.append(new Date());
-    drinkNotificationId.current = setNotification('Drink', 'You recently consumed a drink! Please use the BAC sensor', Constants.SECONDS_TO_MINUTES * Constants.NOTIFICATION_AFTER_DRINK);
+    // drinkNotificationId.current = setNotification('Drink', 'You recently consumed a drink! Please use the BAC sensor', Constants.SECONDS_TO_MINUTES * Constants.NOTIFICATION_AFTER_DRINK);
   }
 
   const handleSubtractDrinkMessage = async () => {
@@ -144,7 +144,7 @@ export default function useBluetooth() {
     ethanolReadings.current.push(parseInt(ethanol));
 
     await cancelNotification(ethanolNotificationId.current);
-    ethanolNotificationId.current = await setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, Constants.SECONDS_TO_MINUTES * Constants.NOTIFICATION_AFTER_ETHANOL);
+    // ethanolNotificationId.current = await setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, Constants.SECONDS_TO_MINUTES * Constants.NOTIFICATION_AFTER_ETHANOL);
 
     clearTimeout(ethanolCalculationTimeoutId.current);
     ethanolCalculationTimeoutId.current = setTimeout(() => {

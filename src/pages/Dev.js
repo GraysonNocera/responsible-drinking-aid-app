@@ -1,7 +1,6 @@
 import React from 'react';
 import { Text, View, Button, TextInput } from 'react-native';
 import { useRef } from 'react';
-import bluetoothReceiver from '../services/bluetoothReceiver';
 import { Subject, merge, map, filter, interval, share } from 'rxjs';
 
 export default function Dev({ navigation }) {
@@ -12,21 +11,7 @@ export default function Dev({ navigation }) {
   let drinkObservable = new Subject();
   let heartRateObservable = new Subject();
   let ethanolObservable = new Subject();
-
-  let bl = bluetoothReceiver.getInstance();
-  let bluetoothMonitor = bl.initializeBluetooth(merge(drinkObservable, heartRateObservable, ethanolObservable));
-  bluetoothMonitor.subscribe(
-    (value) => {
-      console.log('value', value);
-    },
-    (error) => {
-      console.log('error', error);
-    },
-    () => {
-      console.log('complete');
-    }
-  );
-
+  
   return (
     <View>
       <Text>Dev Menu</Text>

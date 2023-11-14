@@ -11,6 +11,7 @@ export default function Home({ navigation }) {
     heartRate,
     ethanol,
     drinkCount,
+    riskFactor,
     requestPermissions,
     scanForDevices,
     connectToDevice,
@@ -48,9 +49,9 @@ export default function Home({ navigation }) {
 
   const getRiskMessage = () => {
     let riskMessage = 'Low risk';
-    if (ethanol > 10 && ethanol <= 20) {
+    if (riskFactor.current > 10 && riskFactor.current <= 30) {
       riskMessage = 'Medium risk';
-    } else if (ethanol > 20) {
+    } else if (riskFactor.current > 30) {
       riskMessage = 'High risk';
     }
 

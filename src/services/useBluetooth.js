@@ -112,6 +112,10 @@ export default function useBluetooth() {
       }
       
       ethanolNotificationId.current = setNotification("Breathalyzer is off!", "To record a reading, hold top button for 5 seconds and wait 10 seconds before blowing into it.");
+      riskFactor.current = calculateRiskFactor(ethanol, drinkCountTimestamps.current, user[0].height, user[0].weight, user[0].isMale);
+      if (riskFactor.current > 30) {
+        setNotification('High Risk!', 'You are at high risk of injury. Use the app to call emergency services or loved ones.', 0);
+      }
     } else {
       sensorOn.current = true;
       ethanolNotificationId.current = setNotification("Breathalyzer is on!", "Please blow into the breathalyzer to record your BAC level.");
@@ -156,6 +160,9 @@ export default function useBluetooth() {
       const widmark = calculateWidmark(drinkCount, user[0].isMale, user[0].weight);
       setEthanol(widmark);
       riskFactor.current = calculateRiskFactor(widmark, drinkCountTimestamps.current, user[0].height, user[0].weight, user[0].isMale);
+      if (riskFactor.current > 30) {
+        setNotification('Alert', 'You are at risk of alcohol poisoning. Please seek medical attention.', 0);
+      }
     }, minutesToMillis(Constants.NOTIFICATION_AFTER_ETHANOL));
   };
 
@@ -183,6 +190,7 @@ export default function useBluetooth() {
     heartRate,
     ethanol,
     drinkCount,
+    riskFactor,
     requestPermissions,
     scanForDevices,
     connectToDevice,

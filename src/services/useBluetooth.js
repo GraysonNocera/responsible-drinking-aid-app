@@ -21,6 +21,7 @@ export default function useBluetooth() {
   const ethanolReadings = useRef([]);
   const ethanolSensorOn = useRef(false);
   const [drinkCount, setDrinkCount] = useState(0);
+  const drinkCountTimestamps = useRef([]);
   const sensorOn = useRef(false); // ethanol sensor
   const riskFactor = useRef(0);
   const drinkNotificationId = useRef(null);
@@ -122,16 +123,19 @@ export default function useBluetooth() {
 
   const handleAddDrinkMessage = () => {
     setDrinkCount((drinkCount) => drinkCount + 1);
+    drinkCountTimestamps.current.append(new Date());
     drinkNotificationId.current = setNotification('Drink', 'You recently consumed a drink! Please use the BAC sensor', Constants.SECONDS_TO_MINUTES * Constants.NOTIFICATION_AFTER_DRINK);
   }
 
   const handleSubtractDrinkMessage = async () => {
+    drinkCountTimestamps.current.pop();
     await cancelNotification(drinkNotificationId.current);
     setDrinkCount((drinkCount) => (Math.max(drinkCount - 1, 0)));
   }
 
-  const handleClearDrinksMessage = () => {
-    cancelNotification(drinkNotificationId.current);
+  const handleClearDrinksMessage = async () => {
+    drinkCountTimestamps.current = [];
+    await cancelNotification(drinkNotificationId.current);
     setDrinkCount(0);
   }
 
@@ -146,7 +150,7 @@ export default function useBluetooth() {
     ethanolCalculationTimeoutId.current = setTimeout(() => {
       const widmark = calculateWidmark(drinkCount, user[0].isMale, user[0].weight);
       setEthanol(widmark);
-      riskFactor.current = calculateRiskFactor(widmark, drinkCount, user[0].height, user[0].weight, user[0].isMale);
+      riskFactor.current = calculateRiskFactor(widmark, drinkCountTimestamps.current, user[0].height, user[0].weight, user[0].isMale);
     }, minutesToMillis(Constants.NOTIFICATION_AFTER_ETHANOL));
   };
 

@@ -14,9 +14,23 @@ export const calculateRiskFactor = (bac, drinkCountTimestamps, height, weight, i
     drinkCount++;
   }
 
+  const bac_lb = 0;
+  const bac_ub = 0.25;
+  const bac_new_ub = 100;
+  const drinkCount_lb = 0;
+  const drinkCount_ub = 6;
+  const drinkCount_new_ub = 100;
+
+  bac = normalize(bac, bac_lb, bac_ub, bac_new_ub);
+  drinkCount = normalize(drinkCount, drinkCount_lb, drinkCount_ub, drinkCount_new_ub);
+
   drinkCountTimestamps.reverse();
 
   return bac * 0.8 + drinkCount * 0.2;
+}
+
+const normalize = (value, lb, ub, new_ub, new_lb=0) => {
+  return ((value - lb) / (ub - lb)) * (new_ub - new_lb) + new_lb;
 }
 
 export const calculateWidmark = (drinkCount, isMale, weight) => {

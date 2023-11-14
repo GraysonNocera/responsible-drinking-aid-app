@@ -108,7 +108,7 @@ export default function useBluetooth() {
     if (message === BluetoothMessages.ethanolSensorOff) {
       sensorOn.current = false;
       if (ethanolReadings.current.length > 0) {
-        setEthanol(Math.max(ethanolReadings.current))
+        setEthanol(Math.max(ethanolReadings.current) / 10_000)
       }
       
       ethanolNotificationId.current = setNotification("Breathalyzer is off!", "To record a reading, hold top button for 5 seconds and wait 10 seconds before blowing into it.");

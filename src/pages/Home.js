@@ -1,8 +1,9 @@
 import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { callEmergencyServices } from '../services/emergencyContact';
 import useBluetooth from '../services/useBluetooth';
+import { vStream } from './Dev';
 
 export default function Home({ navigation }) {
   const { 
@@ -14,8 +15,16 @@ export default function Home({ navigation }) {
     requestPermissions,
     scanForDevices,
     connectToDevice,
+    handleMessage,
     disconnectFromDevice
   } = useBluetooth();
+
+  useEffect(() => {
+    vStream.subscribe((value) => {
+      console.log("Home: " + value)
+      handleMessage(value);
+    });
+  }, []);
 
   const handleConnectToBluetooth = async () => {
     console.log('Connecting to bluetooth')
@@ -30,6 +39,11 @@ export default function Home({ navigation }) {
         await connectToDevice(device);
       });
     }
+  }
+
+  const handleDisconnectToBluetooth = async () => {
+    console.log('Disconnecting from bluetooth')
+    await disconnectFromDevice();
   }
 
   const getGreeting = () => {
@@ -48,9 +62,9 @@ export default function Home({ navigation }) {
 
   const getRiskMessage = () => {
     let riskMessage = 'Low risk';
-    if (riskFactor.current > 10 && riskFactor.current <= 30) {
+    if (riskFactor > 10 && riskFactor <= 30) {
       riskMessage = 'Medium risk';
-    } else if (riskFactor.current > 30) {
+    } else if (riskFactor > 30) {
       riskMessage = 'High risk';
     }
 
@@ -80,6 +94,7 @@ export default function Home({ navigation }) {
       <View style={styles.greetingContainer}>
         <Text style={styles.greetingText}>{greeting}</Text>
         <Button title="Connect to Bluetooth" onPress={handleConnectToBluetooth} />
+        <Button title="Disconnect to Bluetooth" onPress={handleDisconnectToBluetooth} />
         <Text>{connectedDevice ? "Connected!" : "Disconnected!"}</Text>
       </View>
       <View style={[styles.riskContainer, { backgroundColor: riskContainerColor }]}>

@@ -26,7 +26,10 @@ export const calculateRiskFactor = (bac, drinkCountTimestamps, height, weight, i
 
   drinkCountTimestamps.reverse();
 
-  return bac * 0.8 + drinkCount * 0.2;
+  console.log("bac: " + bac);
+  console.log("drinkCount: " + drinkCount);
+
+  return bac > 0.01 ? bac * 0.8 + drinkCount * 0.2 : drinkCount;
 }
 
 const normalize = (value, lb, ub, new_ub, new_lb=0) => {

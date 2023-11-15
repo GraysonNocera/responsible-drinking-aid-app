@@ -47,6 +47,11 @@ export default function Dev({ navigation }) {
         }
       } />
 
+      <Button title="Turn off Ethanol sensor" onPress={ () => {
+          vStream.next(BluetoothMessages.ethanolSensorOff);
+        }
+      } />
+
       <Button title="Home"
         onPress={() => navigation.navigate('Home')} />
     </View>

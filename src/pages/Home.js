@@ -2,10 +2,11 @@ import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
 import React, {useEffect, useState, useRef } from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import useBluetooth from '../services/useBluetooth';
+import { vStream } from './Dev';
+import * as Constants from '../constants';
 
 import { callEmergencyServices, messageLovedOne } from '../services/emergencyContact';
 import { BluetoothMessages } from '../constants';
-import * as Constants from '../constants';
 import { calculateRiskFactor, calculateWidmark } from '../services/riskFactor';
 import { minutesToMillis } from '../services/notifications';
 import { useRealm } from '@realm/react';
@@ -40,7 +41,6 @@ export const useUserUpdate = (realm) => {
 
 export default function Home({ navigation }) {
   const sensorOn = useRef(false); // ethanol sensor
-  const riskFactor = useRef(0);
   const drinkNotificationId = useRef(null);
   const ethanolNotificationId = useRef(null);
   const ethanolCalculationTimeoutId = useRef(null);
@@ -56,14 +56,22 @@ export default function Home({ navigation }) {
   const { 
     devices,
     connectedDevice,
-    heartRate,
     ethanol,
     drinkCount,
+    riskFactor,
     requestPermissions,
     scanForDevices,
     connectToDevice,
+    handleMessage,
     disconnectFromDevice
   } = useBluetooth();
+
+  useEffect(() => {
+    vStream.subscribe((value) => {
+      console.log("Home: " + value)
+      handleMessage(value);
+    });
+  }, []);
 
   useEffect(() => {
     LocationService.init();
@@ -134,6 +142,11 @@ export default function Home({ navigation }) {
     }
   }
 
+  const handleDisconnectToBluetooth = async () => {
+    console.log('Disconnecting from bluetooth')
+    await disconnectFromDevice();
+  }
+
   const getGreeting = () => {
     const now = new Date();
     const currentHour = now.getHours();
@@ -149,10 +162,11 @@ export default function Home({ navigation }) {
   }
 
   const getRiskMessage = () => {
+    console.log("Calculating message. Risk factor: " + riskFactor)
     let riskMessage = 'Low risk';
-    if (ethanol > 10 && ethanol <= 20) {
+    if (riskFactor > Constants.MEDIUM_RISK && riskFactor <= Constants.HIGH_RISK) {
       riskMessage = 'Medium risk';
-    } else if (ethanol > 20) {
+    } else if (riskFactor > Constants.HIGH_RISK) {
       riskMessage = 'High risk';
     }
 
@@ -187,6 +201,7 @@ export default function Home({ navigation }) {
       <View style={styles.greetingContainer}>
         <Text style={styles.greetingText}>{greeting}</Text>
         <Button title="Connect to Bluetooth" onPress={handleConnectToBluetooth} />
+        <Button title="Disconnect to Bluetooth" onPress={handleDisconnectToBluetooth} />
         <Text>{connectedDevice ? "Connected!" : "Disconnected!"}</Text>
       </View>
       <View style={[styles.riskContainer, { backgroundColor: riskContainerColor }]}>
@@ -201,15 +216,6 @@ export default function Home({ navigation }) {
           <View style={styles.dataTextContainer}>
             <Text style={styles.dataLabel}>Blood Alcohol Content (BAC):</Text>
             <Text style={styles.dataValue}>{ethanol}</Text>
-          </View>
-        </View>
-        <View style={styles.dataItem}>
-          <View style={styles.dataIconContainer}>
-            <Icon name="heartbeat" size={24} color="#FF5733" />
-          </View>
-          <View style={styles.dataTextContainer}>
-            <Text style={styles.dataLabel}>Heart Rate:</Text>
-            <Text style={styles.dataValue}>{heartRate}</Text>
           </View>
         </View>
         <View style={styles.dataItem}>

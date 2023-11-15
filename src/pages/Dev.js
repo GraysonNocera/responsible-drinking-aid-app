@@ -2,35 +2,52 @@ import React from 'react';
 import { Text, View, Button, TextInput } from 'react-native';
 import { useRef } from 'react';
 import { Subject, merge, map, filter, interval, share } from 'rxjs';
+import { BluetoothMessages } from '../constants';
+
+export const vStream = new Subject();
 
 export default function Dev({ navigation }) {
-  const [heartRate, onChangeHeartRate] = React.useState('');
   const [ethanol, onChangeEthanol] = React.useState('');
   const drinkCount = useRef(0);
   console.log("Dev Menu")
   let drinkObservable = new Subject();
-  let heartRateObservable = new Subject();
   let ethanolObservable = new Subject();
-  
   return (
     <View>
       <Text>Dev Menu</Text>
       <Button title="Increment Drink" onPress={ () => {
         console.log("Increment Drink")
         drinkCount.current = drinkCount.current + 1;
-        drinkObservable.next(true);
+        vStream.next(BluetoothMessages.addDrink);
       }} />
 
-      <TextInput placeholder="Heart Rate" onChangeText={onChangeHeartRate}/>
+      <Button title="Decrement Drink" onPress={ () => {
+        console.log("Decrement Drink")
+        drinkCount.current = drinkCount.current - 1;
+        vStream.next(BluetoothMessages.subtractDrink);
+      }} />
+
+      <Button title="Clear Drink" onPress={ () => {
+        console.log("Clear Drink")
+        drinkCount.current = 0;
+        vStream.next(BluetoothMessages.clearDrinks);
+      }} />
+
+
       <TextInput placeholder="BAC" onChangeText={onChangeEthanol}/>
 
-      <Button title="Send Heart Rate" onPress={ () => {
-          heartRateObservable.next(heartRate);
+      <Button title="Send BAC" onPress={ () => {
+          vStream.next(BluetoothMessages.ethanol.concat(":").concat(ethanol));
         }
       } />
 
-      <Button title="Send BAC" onPress={ () => {
-          ethanolObservable.next(ethanol);
+      <Button title="Turn on Ethanol sensor" onPress={ () => {
+          vStream.next(BluetoothMessages.ethanolSensorOn);
+        }
+      } />
+
+      <Button title="Turn off Ethanol sensor" onPress={ () => {
+          vStream.next(BluetoothMessages.ethanolSensorOff);
         }
       } />
 
@@ -45,17 +62,12 @@ const values = [
   "Subtract Drink",
   "Ethanol Sensor On",
   "BAC",
-  "Heart Rate",
 ]
 const getRandomMessage = () => {
   const index = Math.floor(Math.random() * values.length);
 
   if (values[index] === "BAC") {
     const retVal = values[index].concat(':').concat((Math.random()).toString());
-    console.log(retVal)
-    return retVal;
-  } else if (values[index] === "Heart Rate") {
-    const retVal = values[index].concat(':').concat((Math.random() * 100).toString());
     console.log(retVal)
     return retVal;
   }
@@ -71,4 +83,4 @@ export const virtualStream = interval(1000 * 2).pipe(
     return typeof value === 'string';
   }),
   share(),
-)
+);

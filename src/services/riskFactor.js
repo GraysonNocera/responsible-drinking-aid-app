@@ -1,6 +1,7 @@
 import * as Constants from '../constants';
+import { cancelNotification, setNotification } from './notifications';
 
-export const calculateRiskFactor = (bac, drinkCountTimestamps, height, weight, isMale) => {
+export const calculateRiskFactor = (bac, drinkCountTimestamps) => {
   // calculate risk factor
   // TODO: normalize bac and drinkCount to be between 0 and 100
 
@@ -14,9 +15,38 @@ export const calculateRiskFactor = (bac, drinkCountTimestamps, height, weight, i
     drinkCount++;
   }
 
+  const bacLb = 0;
+  const bacUb = 0.25;
+  const bacNewUb = 100;
+  const drinkCountLb = 0;
+  const drinkCountUb = 6;
+  const drinkCountNewUb = 100;
+
+  bac = normalize(bac, bacLb, bacUb, bacNewUb);
+  drinkCount = normalize(drinkCount, drinkCountLb, drinkCountUb, drinkCountNewUb);
+
   drinkCountTimestamps.reverse();
 
-  return bac * 0.8 + drinkCount * 0.2;
+  console.log("bac: " + bac);
+  console.log("drinkCount: " + drinkCount);
+
+  return bac > 0.02 ? bac * 0.8 + drinkCount * 0.2 : drinkCount * 0.6;
+}
+
+export const calculateAndHandleRiskFactor = async (bac, drinkCountTimestamps, highRiskNotificationId) => {
+  const riskFac = calculateRiskFactor(bac, drinkCountTimestamps);
+  console.log("Risk factor: " + riskFac)
+  if (riskFac > Constants.HIGH_RISK && !highRiskNotificationId.current) {
+    highRiskNotificationId.current = await setNotification('High Risk!', 'You are at high risk of injury. Use the app to call emergency services or loved ones.', 2);
+  } else {
+    highRiskNotificationId.current = null;
+  }
+
+  return Promise.resolve(riskFac);
+}
+
+const normalize = (value, lb, ub, newUb, newLb=0) => {
+  return ((value - lb) / (ub - lb)) * (newUb - newLb) + newLb;
 }
 
 export const calculateWidmark = (drinkCount, isMale, weight) => {

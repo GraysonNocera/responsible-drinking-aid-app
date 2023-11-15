@@ -4,11 +4,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import useBluetooth from '../services/useBluetooth';
 import { vStream } from './Dev';
 import * as Constants from '../constants';
-
 import { callEmergencyServices, messageLovedOne } from '../services/emergencyContact';
-import { BluetoothMessages } from '../constants';
-import { calculateRiskFactor, calculateWidmark } from '../services/riskFactor';
-import { minutesToMillis } from '../services/notifications';
 import { useRealm } from '@realm/react';
 import LocationService from '../services/location';
 
@@ -173,8 +169,6 @@ export default function Home({ navigation }) {
     return riskMessage;
   }
   
-  const riskTextColor = 'white'
-
   const getRiskContainerColor = () => {
     let riskContainerColor;
     if (riskMessage === 'Low risk') {
@@ -186,15 +180,19 @@ export default function Home({ navigation }) {
     }
     return riskContainerColor;
   }
-  
-  if (riskMessage === 'Medium risk') {
-    riskTextColor = 'black';
-  }
 
+  const getRiskTextColor = () => {
+    let riskTextColor = 'white'
+    if (riskMessage === 'Medium risk') {
+      riskTextColor = 'black';
+    }
+    return riskTextColor;
+  }
 
   const greeting = getGreeting();
   const riskMessage = getRiskMessage();
   const riskContainerColor = getRiskContainerColor();
+  const riskTextColor = getRiskTextColor();
 
   return (
     <View style={styles.container}>
@@ -205,7 +203,7 @@ export default function Home({ navigation }) {
         <Text>{connectedDevice ? "Connected!" : "Disconnected!"}</Text>
       </View>
       <View style={[styles.riskContainer, { backgroundColor: riskContainerColor }]}>
-        <Text style={[styles.riskText, {color: 'white'}]}>{riskMessage}</Text>
+        <Text style={[styles.riskText, {color: riskTextColor }]}>{riskMessage}</Text>
       </View>
       
       <View style={styles.dataContainer}>
@@ -216,6 +214,15 @@ export default function Home({ navigation }) {
           <View style={styles.dataTextContainer}>
             <Text style={styles.dataLabel}>Blood Alcohol Content (BAC):</Text>
             <Text style={styles.dataValue}>{ethanol}</Text>
+          </View>
+        </View>
+        <View style={styles.dataItem}>
+          <View style={styles.dataIconContainer}>
+            <Icon name="flask" size={24} color="#2196F3" />
+          </View>
+          <View style={styles.dataTextContainer}>
+            <Text style={styles.dataLabel}>Time until sobriety (hours):</Text>
+            <Text style={styles.dataValue}>{ Math.max((ethanol - 0.08) / 0.015, 0) }</Text>
           </View>
         </View>
         <View style={styles.dataItem}>

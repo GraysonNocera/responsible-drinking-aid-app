@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import LocationService from '../services/location';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -6,27 +6,24 @@ import { callEmergencyServices, callLovedOne, messageLovedOne } from '../service
 import { useRealm } from '@realm/react';
 
 export default function Emergency({ navigation }) {
-  const [currentLocation, setCurrentLocation] = useState(null);
-  const [formattedAddress, setFormattedAddress] = useState('');
-  // console.log(`Initial current   location: ` + currentLocation)
-
+  const currentLocation = useRef(null);
+  const formattedAddress = useRef('');
   const realm = useRealm();
+
   const user = realm.objects('User');
+  const emergencyContacts = user[0]?.emergencyContacts;
 
-  let emergencyContacts = user[0]?.emergencyContacts;
-
-  console.log(emergencyContacts)
-  
   useEffect(() => {
     LocationService.init();
+    updateCurrentLocation();
   }, []);
 
   const updateCurrentLocation = () => {
     LocationService.getCurrentLocation(
       (location) => {
         console.log(location)
-        setCurrentLocation(location);
-        
+        currentLocation.current = location;
+        console.log(`Current location: ${currentLocation.current.latitude}, ${currentLocation.current.longitude}`)
       },
       (error) => {
         console.error(`Error getting location: ${error}`);
@@ -34,28 +31,19 @@ export default function Emergency({ navigation }) {
     );
   };
 
-  useEffect(() => {
-    updateCurrentLocation();
-  }, []);
-  
-  useEffect(() => {
-    if (currentLocation) {
-      fetchFormattedAddress(currentLocation.latitude, currentLocation.longitude);
-    }
-  }, [currentLocation]);
-
-  // console.log(`Updated current location: ` + currentLocation.latitude + ', ' + currentLocation.longitude)
-
   const fetchFormattedAddress = async (latitude, longitude, callback=null) => {
     try {
+      console.log(`Fetching address for ${latitude}, ${longitude}`)
       const response = await fetch(
         // API Key hard coded in; TO-DO: fix
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=GOOGLEAPIKEYHERE`
       );
       const data = await response.json();
+      console.log(data)
       if (data.results && data.results.length > 0) {
         const address = data.results[0].formatted_address;
-        setFormattedAddress(address);
+        console.log(`Formatted address: ${address}`)
+        formattedAddress.current = address;
         if (callback) {
           callback(address);
         }
@@ -99,7 +87,8 @@ export default function Emergency({ navigation }) {
             <TouchableOpacity
               style={styles.contactButton}
               onPress={async () => {
-                await fetchFormattedAddress(currentLocation.latitude, currentLocation.longitude, (address) => {
+                updateCurrentLocation();
+                await fetchFormattedAddress(currentLocation.current?.latitude, currentLocation.current?.longitude, (address) => {
                   messageLovedOne(contact.phoneNumber, address);
                 });
               }}

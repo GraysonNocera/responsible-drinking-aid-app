@@ -2,6 +2,9 @@ import React from 'react';
 import { Text, View, Button, TextInput } from 'react-native';
 import { useRef } from 'react';
 import { Subject, merge, map, filter, interval, share } from 'rxjs';
+import { BluetoothMessages } from '../constants';
+
+export const vStream = new Subject();
 
 export default function Dev({ navigation }) {
   const [ethanol, onChangeEthanol] = React.useState('');
@@ -16,12 +19,31 @@ export default function Dev({ navigation }) {
       <Button title="Increment Drink" onPress={ () => {
         console.log("Increment Drink")
         drinkCount.current = drinkCount.current + 1;
-        drinkObservable.next(true);
+        vStream.next(BluetoothMessages.addDrink);
       }} />
+
+      <Button title="Decrement Drink" onPress={ () => {
+        console.log("Decrement Drink")
+        drinkCount.current = drinkCount.current - 1;
+        vStream.next(BluetoothMessages.subtractDrink);
+      }} />
+
+      <Button title="Clear Drink" onPress={ () => {
+        console.log("Clear Drink")
+        drinkCount.current = 0;
+        vStream.next(BluetoothMessages.clearDrinks);
+      }} />
+
+
       <TextInput placeholder="BAC" onChangeText={onChangeEthanol}/>
 
       <Button title="Send BAC" onPress={ () => {
-          ethanolObservable.next(ethanol);
+          vStream.next(BluetoothMessages.ethanol.concat(":").concat(ethanol));
+        }
+      } />
+
+      <Button title="Turn on Ethanol sensor" onPress={ () => {
+          vStream.next(BluetoothMessages.ethanolSensorOn);
         }
       } />
 
@@ -57,4 +79,4 @@ export const virtualStream = interval(1000 * 2).pipe(
     return typeof value === 'string';
   }),
   share(),
-)
+);

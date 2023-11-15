@@ -15,15 +15,15 @@ export const calculateRiskFactor = (bac, drinkCountTimestamps) => {
     drinkCount++;
   }
 
-  const bac_lb = 0;
-  const bac_ub = 0.25;
-  const bac_new_ub = 100;
-  const drinkCount_lb = 0;
-  const drinkCount_ub = 6;
-  const drinkCount_new_ub = 100;
+  const bacLb = 0;
+  const bacUb = 0.25;
+  const bacNewUb = 100;
+  const drinkCountLb = 0;
+  const drinkCountUb = 6;
+  const drinkCountNewUb = 100;
 
-  bac = normalize(bac, bac_lb, bac_ub, bac_new_ub);
-  drinkCount = normalize(drinkCount, drinkCount_lb, drinkCount_ub, drinkCount_new_ub);
+  bac = normalize(bac, bacLb, bacUb, bacNewUb);
+  drinkCount = normalize(drinkCount, drinkCountLb, drinkCountUb, drinkCountNewUb);
 
   drinkCountTimestamps.reverse();
 
@@ -45,8 +45,8 @@ export const calculateAndHandleRiskFactor = async (bac, drinkCountTimestamps, hi
   return Promise.resolve(riskFac);
 }
 
-const normalize = (value, lb, ub, new_ub, new_lb=0) => {
-  return ((value - lb) / (ub - lb)) * (new_ub - new_lb) + new_lb;
+const normalize = (value, lb, ub, newUb, newLb=0) => {
+  return ((value - lb) / (ub - lb)) * (newUb - newLb) + newLb;
 }
 
 export const calculateWidmark = (drinkCount, isMale, weight) => {

@@ -2,8 +2,8 @@ import { useMemo, useRef, useState } from "react";
 import { BleManager, BleErrorCode } from "react-native-ble-plx";
 import * as Location from "expo-location";
 import { Buffer } from 'buffer';
-import { setNotification, cancelNotification, minutesToMillis } from "./notifications";
-import { calculateAndHandleRiskFactor, calculateRiskFactor, calculateWidmark } from "./riskFactor";
+import { setNotification, minutesToMillis } from "./notifications";
+import { calculateAndHandleRiskFactor, calculateWidmark } from "./riskFactor";
 import { useRealm } from "@realm/react";
 import * as Constants from "../constants";
 import { BluetoothMessages } from "../constants";
@@ -17,6 +17,7 @@ export default function useBluetooth() {
   const [devices, setDevices] = useState([]);
   const [connectedDevice, setConnectedDevice] = useState(null);
   const [ethanol, setEthanol] = useState(0);
+  const ethanolRef = useRef(0);
   const ethanolReadings = useRef([]);
   const [drinkCount, setDrinkCount] = useState(0);
   const drinkCountTimestamps = useRef([]);
@@ -116,6 +117,7 @@ export default function useBluetooth() {
         const eth = Math.max(...ethanolReadings.current) / 10000.0;
         console.log("Ethanol: " + eth);
         setEthanol(eth.toFixed(2));
+        ethanolRef.current = eth;
 
         const riskFac = await calculateAndHandleRiskFactor(eth, drinkCountTimestamps.current, highRiskNotificationId);
         setRiskFactor(riskFac);
@@ -123,7 +125,7 @@ export default function useBluetooth() {
         console.log("No ethanol readings")
       }
       
-      ethanolNotificationId.current = await setNotification("Breathalyzer is off!", "To record a reading, hold top button for 5 seconds and wait 10 seconds before blowing into it.");
+      ethanolNotificationId.current = await setNotification("Breathalyzer is off!", "To record a reading, hold top button for 5 seconds and wait 10 seconds before blowing into it.", 2);
     } else {
       sensorOn.current = true;
       ethanolNotificationId.current = await setNotification("Breathalyzer is on!", "Please blow into the breathalyzer to record your BAC level.", 2);
@@ -136,7 +138,7 @@ export default function useBluetooth() {
     setDrinkCount((drinkCount) => drinkCount + 1);
     drinkCountTimestamps.current.push(new Date());
 
-    const riskFac = await calculateAndHandleRiskFactor(ethanol, drinkCountTimestamps.current, highRiskNotificationId);
+    const riskFac = await calculateAndHandleRiskFactor(ethanolRef.current, drinkCountTimestamps.current, highRiskNotificationId);
     setRiskFactor(riskFac);
   }
 
@@ -144,7 +146,7 @@ export default function useBluetooth() {
     drinkCountTimestamps.current.pop();
     setDrinkCount((drinkCount) => (Math.max(drinkCount - 1, 0)));
 
-    const riskFac = await calculateAndHandleRiskFactor(ethanol, drinkCountTimestamps.current, highRiskNotificationId);
+    const riskFac = await calculateAndHandleRiskFactor(ethanolRef.current, drinkCountTimestamps.current, highRiskNotificationId);
     setRiskFactor(riskFac);
   }
 
@@ -152,7 +154,7 @@ export default function useBluetooth() {
     drinkCountTimestamps.current = [];
     setDrinkCount(0);
 
-    const riskFac = await calculateAndHandleRiskFactor(ethanol, drinkCountTimestamps.current, highRiskNotificationId);
+    const riskFac = await calculateAndHandleRiskFactor(ethanolRef.current, drinkCountTimestamps.current, highRiskNotificationId);
     setRiskFactor(riskFac);
   }
 
@@ -169,8 +171,10 @@ export default function useBluetooth() {
 
     clearTimeout(ethanolCalculationTimeoutId.current);
     ethanolCalculationTimeoutId.current = setTimeout(() => {
+      console.log("Calculating ethanol with widmark")
       const widmark = calculateWidmark(drinkCount, user[0].isMale, user[0].weight);
       setEthanol(widmark.toFixed(2));
+      ethanolRef.current = widmark;
 
       const riskFac = calculateAndHandleRiskFactor(widmark, drinkCountTimestamps.current, highRiskNotificationId);
       setRiskFactor(riskFac);

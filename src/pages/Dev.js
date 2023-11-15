@@ -12,7 +12,6 @@ export default function Dev({ navigation }) {
   console.log("Dev Menu")
   let drinkObservable = new Subject();
   let ethanolObservable = new Subject();
-
   return (
     <View>
       <Text>Dev Menu</Text>

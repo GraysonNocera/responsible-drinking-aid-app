@@ -1,12 +1,58 @@
 import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
-import React, { useEffect } from 'react';
+import React, {useEffect, useState, useRef } from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { callEmergencyServices } from '../services/emergencyContact';
 import useBluetooth from '../services/useBluetooth';
 import { vStream } from './Dev';
 import * as Constants from '../constants';
 
+import { callEmergencyServices, messageLovedOne } from '../services/emergencyContact';
+import { BluetoothMessages } from '../constants';
+import { calculateRiskFactor, calculateWidmark } from '../services/riskFactor';
+import { minutesToMillis } from '../services/notifications';
+import { useRealm } from '@realm/react';
+import LocationService from '../services/location';
+
+export const useUserUpdate = (realm) => {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+
+    try {
+      const users = realm.objects('User');
+
+      setUser(users);
+
+      const handleChange = () => {
+        setUser(users);
+      };
+
+      users.addListener(handleChange);
+
+      return () => {
+        users.removeAllListeners();
+      };
+    } catch (error) {
+      console.error('Error using Realm for user data:', error);
+    }
+  }, [realm]);
+
+  return user;
+};
+
 export default function Home({ navigation }) {
+  const sensorOn = useRef(false); // ethanol sensor
+  const drinkNotificationId = useRef(null);
+  const ethanolNotificationId = useRef(null);
+  const ethanolCalculationTimeoutId = useRef(null);
+  const realm = useRealm();
+  // const user = realm.objects('User');
+  const user = useUserUpdate(realm);
+
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [formattedAddress, setFormattedAddress] = useState('');
+
+  const [defaultEmergencyPhone, setDefaultEmergencyPhone] = useState(null);
+  
   const { 
     devices,
     connectedDevice,
@@ -27,6 +73,60 @@ export default function Home({ navigation }) {
     });
   }, []);
 
+  useEffect(() => {
+    LocationService.init();
+  }, []);
+
+  const fetchFormattedAddress = async (latitude, longitude) => {
+    try {
+      const response = await fetch(
+        // API Key hard coded in; TO-DO: fix
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=GOOGLEAPIKEYHERE`
+      );
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        const address = data.results[0].formatted_address;
+        setFormattedAddress(address);
+      }
+    } catch (error) {
+      console.error(`Error fetching address: ${error}`);
+    }
+  };
+
+  const updateCurrentLocation = () => {
+    LocationService.getCurrentLocation(
+      (location) => {
+        console.log(location)
+        setCurrentLocation(location);
+        
+      },
+      (error) => {
+        console.error(`Error getting location: ${error}`);
+      }
+    );
+  };
+
+  useEffect(() => {
+    updateCurrentLocation();
+  }, []);
+
+  useEffect(() => {
+    if (currentLocation) {
+      fetchFormattedAddress(currentLocation.latitude, currentLocation.longitude);
+    }
+  }, [currentLocation]);
+
+  useEffect(() => {
+    try {
+      const phone = user[0].emergencyContacts[0].phoneNumber;
+      console.log('Default emergency phone number: ', phone);
+      setDefaultEmergencyPhone(phone);
+    } catch (error) {
+      // Handle the exception, e.g., by logging an error message
+      console.log('No default emergency phone number');
+    }
+  }, [])
+  
   const handleConnectToBluetooth = async () => {
     console.log('Connecting to bluetooth')
     if (await requestPermissions()) {
@@ -72,6 +172,8 @@ export default function Home({ navigation }) {
 
     return riskMessage;
   }
+  
+  const riskTextColor = 'white'
 
   const getRiskContainerColor = () => {
     let riskContainerColor;
@@ -82,14 +184,17 @@ export default function Home({ navigation }) {
     } else if (riskMessage === 'High risk') {
       riskContainerColor = 'red';
     }
-
     return riskContainerColor;
+  }
+  
+  if (riskMessage === 'Medium risk') {
+    riskTextColor = 'black';
   }
 
 
-  let greeting = getGreeting();
-  let riskMessage = getRiskMessage();
-  let riskContainerColor = getRiskContainerColor();
+  const greeting = getGreeting();
+  const riskMessage = getRiskMessage();
+  const riskContainerColor = getRiskContainerColor();
 
   return (
     <View style={styles.container}>
@@ -100,7 +205,7 @@ export default function Home({ navigation }) {
         <Text>{connectedDevice ? "Connected!" : "Disconnected!"}</Text>
       </View>
       <View style={[styles.riskContainer, { backgroundColor: riskContainerColor }]}>
-        <Text style={styles.riskText}>{riskMessage}</Text>
+        <Text style={[styles.riskText, {color: 'white'}]}>{riskMessage}</Text>
       </View>
       
       <View style={styles.dataContainer}>
@@ -122,11 +227,16 @@ export default function Home({ navigation }) {
             <Text style={styles.dataValue}>{drinkCount}</Text>
           </View>
         </View>
+        {riskMessage === 'High risk' && (
+          <TouchableOpacity
+            style={styles.highRiskButton} // Define styles for the button
+            onPress={() => {messageLovedOne(defaultEmergencyPhone, formattedAddress)}}
+              // TODO: send a message
+          >
+            <Text style={styles.highRiskButtonText}>Text my emergency contact</Text>
+          </TouchableOpacity>
+        )}
       </View>
-        <Button title="Settings"
-        onPress={() => {
-          navigation.navigate('Settings')
-        }} />
 
       {/* eslint-disable-next-line no-undef */}
       { __DEV__ &&
@@ -145,10 +255,15 @@ export default function Home({ navigation }) {
           <Icon name="cog" size={40} color='#2196F3' />
         </TouchableOpacity>
       </View>
-      <Button title="Emergency Contact Options"
-        onPress={() => {
-          navigation.navigate('Emergency')
-        }} />
+      <View style={styles.contactButtonContainer}>
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate('Emergency');
+          }}
+        >
+          <Icon name="phone" size={40} color='#2196F3' />
+        </TouchableOpacity>
+      </View>
       <TouchableOpacity style={styles.emergencyButton} onPress={() => callEmergencyServices()}>
         <Text style={styles.emergencyButtonText}>Call Emergency Services</Text>
       </TouchableOpacity>
@@ -222,6 +337,11 @@ const styles = StyleSheet.create({
     bottom: 20,
     right: 20
   },
+  contactButtonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20
+  },
   emergencyButton: {
     backgroundColor: 'red',
     padding: 16,
@@ -253,5 +373,19 @@ const styles = StyleSheet.create({
   },
   dataValue: {
     fontSize: 16,
+  },
+  highRiskButton: {
+    backgroundColor: 'red',
+    padding: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  highRiskButtonText: {
+    fontSize: 18,
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

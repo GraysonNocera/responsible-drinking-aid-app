@@ -13,7 +13,7 @@ export function setupNotifications(shouldShowAlert=true, shouldPlaySound=true, s
 }
 
 // Send notification
-export async function setNotification(title, body, when=0) {
+export async function setNotification(title, body, when=0, repeat=false) {
   // time is in seconds
 
   const id = await Notifications.scheduleNotificationAsync({
@@ -21,7 +21,11 @@ export async function setNotification(title, body, when=0) {
       title: title,
       body: body,
     },
-    trigger: { seconds: when },
+    trigger: 
+    { 
+      seconds: when,
+      repeats: repeat
+    },
   });
 
   return Promise.resolve(id);

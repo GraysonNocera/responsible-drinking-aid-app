@@ -4,6 +4,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { callEmergencyServices } from '../services/emergencyContact';
 import useBluetooth from '../services/useBluetooth';
 import { vStream } from './Dev';
+import * as Constants from '../constants';
 
 export default function Home({ navigation }) {
   const { 
@@ -61,10 +62,11 @@ export default function Home({ navigation }) {
   }
 
   const getRiskMessage = () => {
+    console.log("Calculating message. Risk factor: " + riskFactor)
     let riskMessage = 'Low risk';
-    if (riskFactor > 10 && riskFactor <= 30) {
+    if (riskFactor > Constants.MEDIUM_RISK && riskFactor <= Constants.HIGH_RISK) {
       riskMessage = 'Medium risk';
-    } else if (riskFactor > 30) {
+    } else if (riskFactor > Constants.HIGH_RISK) {
       riskMessage = 'High risk';
     }
 

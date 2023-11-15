@@ -3,7 +3,7 @@ import { BleManager, BleErrorCode } from "react-native-ble-plx";
 import * as Location from "expo-location";
 import { Buffer } from 'buffer';
 import { setNotification, cancelNotification, minutesToMillis } from "./notifications";
-import { calculateRiskFactor, calculateWidmark } from "./riskFactor";
+import { calculateAndHandleRiskFactor, calculateRiskFactor, calculateWidmark } from "./riskFactor";
 import { useRealm } from "@realm/react";
 import * as Constants from "../constants";
 import { BluetoothMessages } from "../constants";
@@ -24,6 +24,7 @@ export default function useBluetooth() {
   const [riskFactor, setRiskFactor] = useState(0); //update to use state
   const ethanolNotificationId = useRef(null);
   const ethanolCalculationTimeoutId = useRef(null);
+  const highRiskNotificationId = useRef(null);
   const realm = useRealm();
   const user = realm.objects('User');
 
@@ -115,11 +116,8 @@ export default function useBluetooth() {
         const eth = Math.max(...ethanolReadings.current) / 10000.0;
         console.log("Ethanol: " + eth);
         setEthanol(eth.toFixed(2));
-        const riskFac = calculateRiskFactor(eth, drinkCountTimestamps.current, user[0].height, user[0].weight, user[0].isMale);
-        console.log("Risk factor: " + riskFac)
-        if (riskFac > 30) {
-          await setNotification('High Risk!', 'You are at high risk of injury. Use the app to call emergency services or loved ones.', 2);
-        }
+
+        const riskFac = await calculateAndHandleRiskFactor(eth, drinkCountTimestamps.current, highRiskNotificationId);
         setRiskFactor(riskFac);
       } else {
         console.log("No ethanol readings")
@@ -138,12 +136,7 @@ export default function useBluetooth() {
     setDrinkCount((drinkCount) => drinkCount + 1);
     drinkCountTimestamps.current.push(new Date());
 
-    const riskFac = calculateRiskFactor(ethanol, drinkCountTimestamps.current, user[0].height, user[0].weight, user[0].isMale);
-    console.log("Risk factor: " + riskFac)
-    if (riskFac > 30) {
-      await setNotification('High Risk!', 'You are at high risk of injury. Use the app to call emergency services or loved ones.', 2);
-    }
-
+    const riskFac = await calculateAndHandleRiskFactor(ethanol, drinkCountTimestamps.current, highRiskNotificationId);
     setRiskFactor(riskFac);
   }
 
@@ -151,12 +144,7 @@ export default function useBluetooth() {
     drinkCountTimestamps.current.pop();
     setDrinkCount((drinkCount) => (Math.max(drinkCount - 1, 0)));
 
-    const riskFac = calculateRiskFactor(ethanol, drinkCountTimestamps.current, user[0].height, user[0].weight, user[0].isMale);
-    console.log("Risk factor: " + riskFac)
-    if (riskFac > 30) {
-      await setNotification('High Risk!', 'You are at high risk of injury. Use the app to call emergency services or loved ones.', 2);
-    }
-
+    const riskFac = await calculateAndHandleRiskFactor(ethanol, drinkCountTimestamps.current, highRiskNotificationId);
     setRiskFactor(riskFac);
   }
 
@@ -164,12 +152,7 @@ export default function useBluetooth() {
     drinkCountTimestamps.current = [];
     setDrinkCount(0);
 
-    const riskFac = calculateRiskFactor(ethanol, drinkCountTimestamps.current, user[0].height, user[0].weight, user[0].isMale);
-    console.log("Risk factor: " + riskFac)
-    if (riskFac > 30) {
-      await setNotification('High Risk!', 'You are at high risk of injury. Use the app to call emergency services or loved ones.', 2);
-    }
-
+    const riskFac = await calculateAndHandleRiskFactor(ethanol, drinkCountTimestamps.current, highRiskNotificationId);
     setRiskFactor(riskFac);
   }
 
@@ -184,17 +167,13 @@ export default function useBluetooth() {
       return;
     }
 
-    await cancelNotification(ethanolNotificationId.current);
-    // ethanolNotificationId.current = await setNotification(`Alert', 'It's been 30 minutes since your last ethanol reading. Please use the BAC sensor again.`, Constants.SECONDS_TO_MINUTES * Constants.NOTIFICATION_AFTER_ETHANOL);
-
     clearTimeout(ethanolCalculationTimeoutId.current);
     ethanolCalculationTimeoutId.current = setTimeout(() => {
       const widmark = calculateWidmark(drinkCount, user[0].isMale, user[0].weight);
       setEthanol(widmark.toFixed(2));
-      riskFactor.current = calculateRiskFactor(widmark, drinkCountTimestamps.current, user[0].height, user[0].weight, user[0].isMale);
-      if (riskFactor.current > 30) {
-        setNotification('Alert', 'You are at risk of alcohol poisoning. Please seek medical attention.', 0);
-      }
+
+      const riskFac = calculateAndHandleRiskFactor(widmark, drinkCountTimestamps.current, highRiskNotificationId);
+      setRiskFactor(riskFac);
     }, minutesToMillis(Constants.NOTIFICATION_AFTER_ETHANOL));
   };
 

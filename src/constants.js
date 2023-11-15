@@ -22,3 +22,7 @@ export const WIDMARK_CONSTANT = 100;
 export const LBS_TO_GRAMS = 453.592;
 export const GRAMS_PER_DRINK = 14;
 
+export const LOW_RISK = 0;
+export const MEDIUM_RISK = 20;
+export const HIGH_RISK = 40;
+

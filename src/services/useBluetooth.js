@@ -194,6 +194,7 @@ export default function useBluetooth() {
     ethanol,
     drinkCount,
     riskFactor,
+    highRiskNotificationId,
     requestPermissions,
     scanForDevices,
     connectToDevice,

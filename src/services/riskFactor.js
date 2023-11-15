@@ -38,7 +38,8 @@ export const calculateAndHandleRiskFactor = async (bac, drinkCountTimestamps, hi
   console.log("Risk factor: " + riskFac)
   if (riskFac > Constants.HIGH_RISK && !highRiskNotificationId.current) {
     highRiskNotificationId.current = await setNotification('High Risk!', 'You are at high risk of injury. Use the app to call emergency services or loved ones.', 2);
-  } else {
+    console.log("High risk notification id: " + highRiskNotificationId.current)
+  } else if (riskFac <= Constants.HIGH_RISK && highRiskNotificationId.current) {
     highRiskNotificationId.current = null;
   }
 

@@ -7,6 +7,7 @@ import * as Constants from '../constants';
 import { callEmergencyServices, messageLovedOne } from '../services/emergencyContact';
 import { useRealm } from '@realm/react';
 import LocationService from '../services/location';
+import { addNotificationResponseReceivedListener } from '../services/notifications';
 
 export const useUserUpdate = (realm) => {
   const [user, setUser] = useState(null);
@@ -36,10 +37,6 @@ export const useUserUpdate = (realm) => {
 };
 
 export default function Home({ navigation }) {
-  const sensorOn = useRef(false); // ethanol sensor
-  const drinkNotificationId = useRef(null);
-  const ethanolNotificationId = useRef(null);
-  const ethanolCalculationTimeoutId = useRef(null);
   const realm = useRealm();
   // const user = realm.objects('User');
   const user = useUserUpdate(realm);
@@ -55,6 +52,7 @@ export default function Home({ navigation }) {
     ethanol,
     drinkCount,
     riskFactor,
+    highRiskNotificationId,
     requestPermissions,
     scanForDevices,
     connectToDevice,
@@ -71,30 +69,58 @@ export default function Home({ navigation }) {
 
   useEffect(() => {
     LocationService.init();
+
+    addNotificationResponseReceivedListener((response) => {
+
+      console.log(response);
+      const id = response?.notification?.request?.identifier;
+      console.log(id, highRiskNotificationId.current)
+      if (id == highRiskNotificationId.current) {
+        console.log("High risk notification clicked");
+        updateCurrentLocation(async (location) => {
+          console.log("Got location, ", location)
+          await fetchFormattedAddress(location.latitude, location.longitude, (address) => {
+            console.log("Got address", address)
+
+            console.log(user, user[0], user[0].emergencyContacts, user[0].emergencyContacts[0])
+            if (user && user.length > 0 && user[0].emergencyContacts && user[0].emergencyContacts.length > 0) {
+              messageLovedOne(user[0].emergencyContacts[0].phoneNumber, address);
+            }
+          });
+        });
+      }
+    });
   }, []);
 
-  const fetchFormattedAddress = async (latitude, longitude) => {
+  const fetchFormattedAddress = async (latitude, longitude, callback=null) => {
     try {
+      console.log(`Fetching address for ${latitude}, ${longitude}`)
       const response = await fetch(
         // API Key hard coded in; TO-DO: fix
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=GOOGLEAPIKEYHERE`
       );
       const data = await response.json();
+      console.log(data)
       if (data.results && data.results.length > 0) {
         const address = data.results[0].formatted_address;
         setFormattedAddress(address);
+        if (callback) {
+          callback(address);
+        }
       }
     } catch (error) {
       console.error(`Error fetching address: ${error}`);
     }
   };
 
-  const updateCurrentLocation = () => {
+  const updateCurrentLocation = (callback=null) => {
     LocationService.getCurrentLocation(
       (location) => {
         console.log(location)
         setCurrentLocation(location);
-        
+        if (callback) {
+          callback(location);
+        }
       },
       (error) => {
         console.error(`Error getting location: ${error}`);
@@ -218,7 +244,7 @@ export default function Home({ navigation }) {
         </View>
         <View style={styles.dataItem}>
           <View style={styles.dataIconContainer}>
-            <Icon name="flask" size={24} color="#2196F3" />
+            <Icon name="car" size={24} color="#2196F3" />
           </View>
           <View style={styles.dataTextContainer}>
             <Text style={styles.dataLabel}>Time until sobriety (hours):</Text>

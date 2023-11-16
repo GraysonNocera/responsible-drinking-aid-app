@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
-import React, {useEffect, useState, useRef } from 'react';
+import React, {useEffect} from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import useBluetooth from '../services/useBluetooth';
 import { vStream } from './Dev';
@@ -13,7 +13,6 @@ export default function Home({ navigation }) {
   const user = useQuery('User');
   
   const { 
-    devices,
     connectedDevice,
     ethanol,
     drinkCount,
@@ -47,18 +46,19 @@ export default function Home({ navigation }) {
       console.log(id, highRiskNotificationId.current)
 
       if (id != highRiskNotificationId.current) { return; }
-
       console.log("High risk notification clicked");
 
-      const location = updateCurrentLocation();
-      console.log("Got location, ", location);
-
-      const address = await fetchFormattedAddress(location?.latitude, location?.longitude);
-      console.log("Got address", address);
-
-      console.log(user, user[0], user[0].emergencyContacts, user[0].emergencyContacts[0]);
-      if (user && user.length > 0 && user[0].emergencyContacts && user[0].emergencyContacts.length > 0) {
-        messageLovedOne(user[0].emergencyContacts[0].phoneNumber, address);
+      if (formattedAddress.current) {
+        console.log("Sending message")
+        messageLovedOne(user[0]?.emergencyContacts[0]?.phoneNumber, formattedAddress.current);
+      } else {
+        console.log("Updating current location in onPress")
+        updateCurrentLocation(() => {
+          fetchFormattedAddress().then((address) => {
+            formattedAddress.current = address;
+            messageLovedOne(user[0]?.emergencyContacts[0]?.phoneNumber, address);
+          });
+        });
       }
     });
   }, []);

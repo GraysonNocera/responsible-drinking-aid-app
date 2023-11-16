@@ -13,7 +13,15 @@ export function callLovedOne(phoneNumber) {
 }
 
 export function messageLovedOne(phoneNumber, currentLocation) {
-  // const currentAddress = '1 Poop St';
+  if (!phoneNumber) {
+    console.error("No phone number provided");
+    return;
+  }
+
+  if (!currentLocation) {
+    console.error("No current location provided");
+    return;
+  }
   
   const message = `I might be in an unsafe situation. My current address is: ${currentLocation}`;
   

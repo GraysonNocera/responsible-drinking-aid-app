@@ -14,7 +14,6 @@ const DEVICE_NAME = 'RDA477'; // name of the device we are connecting to
 
 export default function useBluetooth() {
   const manager = useMemo(() => new BleManager(), []);
-  const [devices, setDevices] = useState([]);
   const [connectedDevice, setConnectedDevice] = useState(null);
   const [ethanol, setEthanol] = useState(0);
   const ethanolRef = useRef(0);
@@ -47,8 +46,6 @@ export default function useBluetooth() {
 
       if (device.name == DEVICE_NAME) {
         console.log('Found our device!');
-        console.log("Length of devices: " + devices.length)
-        setDevices([...devices, device]);
         if (callback) {
           callback(device);
         }
@@ -189,7 +186,6 @@ export default function useBluetooth() {
   }
 
   return {
-    devices,
     connectedDevice,
     ethanol,
     drinkCount,

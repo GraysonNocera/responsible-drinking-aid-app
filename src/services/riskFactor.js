@@ -1,5 +1,5 @@
 import * as Constants from '../constants';
-import { cancelNotification, setNotification } from './notifications';
+import { setNotification } from './notifications';
 
 export const calculateRiskFactor = (bac, drinkCountTimestamps) => {
   // calculate risk factor

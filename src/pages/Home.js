@@ -12,41 +12,13 @@ import { minutesToMillis } from '../services/notifications';
 import { useRealm } from '@realm/react';
 import LocationService from '../services/location';
 
-export const useUserUpdate = (realm) => {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-
-    try {
-      const users = realm.objects('User');
-
-      setUser(users);
-
-      const handleChange = () => {
-        setUser(users);
-      };
-
-      users.addListener(handleChange);
-
-      return () => {
-        users.removeAllListeners();
-      };
-    } catch (error) {
-      console.error('Error using Realm for user data:', error);
-    }
-  }, [realm]);
-
-  return user;
-};
-
 export default function Home({ navigation }) {
   const sensorOn = useRef(false); // ethanol sensor
   const drinkNotificationId = useRef(null);
   const ethanolNotificationId = useRef(null);
   const ethanolCalculationTimeoutId = useRef(null);
   const realm = useRealm();
-  // const user = realm.objects('User');
-  const user = useUserUpdate(realm);
+  const user = realm.objects('User');
 
   const [currentLocation, setCurrentLocation] = useState(null);
   const [formattedAddress, setFormattedAddress] = useState('');
@@ -126,6 +98,8 @@ export default function Home({ navigation }) {
       console.log('No default emergency phone number');
     }
   }, [])
+
+  // console.log(user[0].emergencyContacts[0].phoneNumber)
   
   const handleConnectToBluetooth = async () => {
     console.log('Connecting to bluetooth')
@@ -166,7 +140,7 @@ export default function Home({ navigation }) {
     let riskMessage = 'Low risk';
     if (riskFactor > Constants.MEDIUM_RISK && riskFactor <= Constants.HIGH_RISK) {
       riskMessage = 'Medium risk';
-    } else if (riskFactor > Constants.HIGH_RISK) {
+    } else if (riskFactor > -1) {
       riskMessage = 'High risk';
     }
 

@@ -8,6 +8,7 @@ import { callEmergencyServices, messageLovedOne } from '../services/emergencyCon
 import { useRealm } from '@realm/react';
 import LocationService from '../services/location';
 import { addNotificationResponseReceivedListener } from '../services/notifications';
+import { useLocation } from '../services/useLocation';
 
 export const useUserUpdate = (realm) => {
   const [user, setUser] = useState(null);
@@ -59,6 +60,12 @@ export default function Home({ navigation }) {
     handleMessage,
     disconnectFromDevice
   } = useBluetooth();
+
+  const {
+    updateCurrentLocation,
+    currentLocation,
+    formattedAddress,
+  } = useLocation();
 
   useEffect(() => {
     vStream.subscribe((value) => {

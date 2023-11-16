@@ -10,6 +10,7 @@ import Dev from './src/pages/Dev';
 import { setupNotifications } from './src/services/notifications';
 import realmConfig from './src/services/db.js'
 import { LogBox } from 'react-native';
+import { LocationService } from './src/services/location';
 
 LogBox.ignoreLogs(['new NativeEventEmitter()']);
 
@@ -21,6 +22,7 @@ export default function App() {
 
   useEffect(() => {
     setupNotifications();
+    LocationService.init();
   }, []);
 
   return (

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Button } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Button, Alert } from 'react-native';
 import { useState } from 'react';
 import React from 'react';
 import Realm from 'realm';
@@ -71,10 +71,11 @@ export default function SettingsScreen({ navigation }) {
 
           if (heightInt < 0 || weightInt < 0) {
             console.log('Invalid height or weight');
+            Alert.alert("Error", "Height and weight must be positive numbers.");
             return;
           }
           if (isNaN(heightInt) || isNaN(weightInt)) {
-            console.log('Invalid height or weight');
+            Alert.alert("Error", "Invalid height or weight.");
             return;
           }
 

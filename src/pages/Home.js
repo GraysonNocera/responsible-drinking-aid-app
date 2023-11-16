@@ -126,10 +126,18 @@ export default function Home({ navigation }) {
     return riskTextColor;
   }
 
+  const timeToSobriety = () => {
+    const time = Math.max((ethanol - 0.08) / 0.015, 0);
+    var n = new Date(0,0);
+    n.setSeconds(+time * 60 * 60);
+    return n.toTimeString().slice(0, 5);
+  }
+
   const greeting = getGreeting();
   const riskMessage = getRiskMessage();
   const riskContainerColor = getRiskContainerColor();
   const riskTextColor = getRiskTextColor();
+  const timeToSobrietyString = timeToSobriety();
 
   return (
     <View style={styles.container}>
@@ -159,7 +167,7 @@ export default function Home({ navigation }) {
           </View>
           <View style={styles.dataTextContainer}>
             <Text style={styles.dataLabel}>Time until sobriety (hours):</Text>
-            <Text style={styles.dataValue}>{ Math.max((ethanol - 0.08) / 0.015, 0) }</Text>
+            <Text style={styles.dataValue}>{ timeToSobrietyString }</Text>
           </View>
         </View>
         <View style={styles.dataItem}>

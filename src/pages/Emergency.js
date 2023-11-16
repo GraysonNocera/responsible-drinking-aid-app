@@ -1,57 +1,24 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import LocationService from '../services/location';
+import useLocation from '../services/useLocation';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { callEmergencyServices, callLovedOne, messageLovedOne } from '../services/emergencyContact';
-import { useRealm } from '@realm/react';
+import { useQuery } from '@realm/react';
 
 export default function Emergency({ navigation }) {
-  const currentLocation = useRef(null);
-  const formattedAddress = useRef('');
-  const realm = useRealm();
-
-  const user = realm.objects('User');
+  const user = useQuery('User');
   const emergencyContacts = user[0]?.emergencyContacts;
 
-  useEffect(() => {
-    LocationService.init();
-    updateCurrentLocation();
-  }, []);
+  const {
+    updateCurrentLocation,
+    fetchFormattedAddress,
+    currentLocation,
+    formattedAddress,
+  } = useLocation();
 
-  const updateCurrentLocation = () => {
-    LocationService.getCurrentLocation(
-      (location) => {
-        console.log(location)
-        currentLocation.current = location;
-        console.log(`Current location: ${currentLocation.current.latitude}, ${currentLocation.current.longitude}`)
-      },
-      (error) => {
-        console.error(`Error getting location: ${error}`);
-      }
-    );
-  };
-
-  const fetchFormattedAddress = async (latitude, longitude, callback=null) => {
-    try {
-      console.log(`Fetching address for ${latitude}, ${longitude}`)
-      const response = await fetch(
-        // API Key hard coded in; TO-DO: fix
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=GOOGLEAPIKEYHERE`
-      );
-      const data = await response.json();
-      console.log(data)
-      if (data.results && data.results.length > 0) {
-        const address = data.results[0].formatted_address;
-        console.log(`Formatted address: ${address}`)
-        formattedAddress.current = address;
-        if (callback) {
-          callback(address);
-        }
-      }
-    } catch (error) {
-      console.error(`Error fetching address: ${error}`);
-    }
-  };
+  console.log("in Emergency.js")
+  console.log(`Current location: ${JSON.stringify(currentLocation)}`);
+  console.log(`Formatted address: ${formattedAddress.current}`);
   
   return (
     <View style={styles.container}>
@@ -86,11 +53,19 @@ export default function Emergency({ navigation }) {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.contactButton}
-              onPress={async () => {
-                updateCurrentLocation();
-                await fetchFormattedAddress(currentLocation.current?.latitude, currentLocation.current?.longitude, (address) => {
-                  messageLovedOne(contact.phoneNumber, address);
-                });
+              onPress={() => {
+                if (formattedAddress.current) {
+                  console.log("Sending message")
+                  messageLovedOne(contact.phoneNumber, formattedAddress.current);
+                } else {
+                  console.log("Updating current location in onPress")
+                  updateCurrentLocation(() => {
+                    fetchFormattedAddress().then((address) => {
+                      formattedAddress.current = address;
+                      messageLovedOne(contact.phoneNumber, address);
+                    });
+                  });
+                }
               }}
             >
               <Icon name="envelope" size={24} color="#2196F3" />

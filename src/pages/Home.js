@@ -5,47 +5,12 @@ import useBluetooth from '../services/useBluetooth';
 import { vStream } from './Dev';
 import * as Constants from '../constants';
 import { callEmergencyServices, messageLovedOne } from '../services/emergencyContact';
-import { useRealm } from '@realm/react';
-import LocationService from '../services/location';
+import { useQuery } from '@realm/react';
 import { addNotificationResponseReceivedListener } from '../services/notifications';
-import { useLocation } from '../services/useLocation';
-
-export const useUserUpdate = (realm) => {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-
-    try {
-      const users = realm.objects('User');
-
-      setUser(users);
-
-      const handleChange = () => {
-        setUser(users);
-      };
-
-      users.addListener(handleChange);
-
-      return () => {
-        users.removeAllListeners();
-      };
-    } catch (error) {
-      console.error('Error using Realm for user data:', error);
-    }
-  }, [realm]);
-
-  return user;
-};
+import useLocation from '../services/useLocation';
 
 export default function Home({ navigation }) {
-  const realm = useRealm();
-  // const user = realm.objects('User');
-  const user = useUserUpdate(realm);
-
-  const [currentLocation, setCurrentLocation] = useState(null);
-  const [formattedAddress, setFormattedAddress] = useState('');
-
-  const [defaultEmergencyPhone, setDefaultEmergencyPhone] = useState(null);
+  const user = useQuery('User');
   
   const { 
     devices,
@@ -63,6 +28,7 @@ export default function Home({ navigation }) {
 
   const {
     updateCurrentLocation,
+    fetchFormattedAddress,
     currentLocation,
     formattedAddress,
   } = useLocation();
@@ -75,96 +41,34 @@ export default function Home({ navigation }) {
   }, []);
 
   useEffect(() => {
-    LocationService.init();
-
-    addNotificationResponseReceivedListener((response) => {
-
+    addNotificationResponseReceivedListener(async (response) => {
       console.log(response);
       const id = response?.notification?.request?.identifier;
       console.log(id, highRiskNotificationId.current)
-      if (id == highRiskNotificationId.current) {
-        console.log("High risk notification clicked");
-        updateCurrentLocation(async (location) => {
-          console.log("Got location, ", location)
-          await fetchFormattedAddress(location.latitude, location.longitude, (address) => {
-            console.log("Got address", address)
 
-            console.log(user, user[0], user[0].emergencyContacts, user[0].emergencyContacts[0])
-            if (user && user.length > 0 && user[0].emergencyContacts && user[0].emergencyContacts.length > 0) {
-              messageLovedOne(user[0].emergencyContacts[0].phoneNumber, address);
-            }
-          });
-        });
+      if (id != highRiskNotificationId.current) { return; }
+
+      console.log("High risk notification clicked");
+
+      const location = updateCurrentLocation();
+      console.log("Got location, ", location);
+
+      const address = await fetchFormattedAddress(location?.latitude, location?.longitude);
+      console.log("Got address", address);
+
+      console.log(user, user[0], user[0].emergencyContacts, user[0].emergencyContacts[0]);
+      if (user && user.length > 0 && user[0].emergencyContacts && user[0].emergencyContacts.length > 0) {
+        messageLovedOne(user[0].emergencyContacts[0].phoneNumber, address);
       }
     });
   }, []);
-
-  const fetchFormattedAddress = async (latitude, longitude, callback=null) => {
-    try {
-      console.log(`Fetching address for ${latitude}, ${longitude}`)
-      const response = await fetch(
-        // API Key hard coded in; TO-DO: fix
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=GOOGLEAPIKEYHERE`
-      );
-      const data = await response.json();
-      console.log(data)
-      if (data.results && data.results.length > 0) {
-        const address = data.results[0].formatted_address;
-        setFormattedAddress(address);
-        if (callback) {
-          callback(address);
-        }
-      }
-    } catch (error) {
-      console.error(`Error fetching address: ${error}`);
-    }
-  };
-
-  const updateCurrentLocation = (callback=null) => {
-    LocationService.getCurrentLocation(
-      (location) => {
-        console.log(location)
-        setCurrentLocation(location);
-        if (callback) {
-          callback(location);
-        }
-      },
-      (error) => {
-        console.error(`Error getting location: ${error}`);
-      }
-    );
-  };
-
-  useEffect(() => {
-    updateCurrentLocation();
-  }, []);
-
-  useEffect(() => {
-    if (currentLocation) {
-      fetchFormattedAddress(currentLocation.latitude, currentLocation.longitude);
-    }
-  }, [currentLocation]);
-
-  useEffect(() => {
-    try {
-      const phone = user[0].emergencyContacts[0].phoneNumber;
-      console.log('Default emergency phone number: ', phone);
-      setDefaultEmergencyPhone(phone);
-    } catch (error) {
-      // Handle the exception, e.g., by logging an error message
-      console.log('No default emergency phone number');
-    }
-  }, [])
   
   const handleConnectToBluetooth = async () => {
     console.log('Connecting to bluetooth')
     if (await requestPermissions()) {
       console.log('Permissions granted')
       await scanForDevices(async (device) => {
-        if (!device) {
-          return;
-        }
-
+        if (!device) { return; }
         console.log('Connecting to device')
         await connectToDevice(device);
       });
@@ -270,8 +174,21 @@ export default function Home({ navigation }) {
         {riskMessage === 'High risk' && (
           <TouchableOpacity
             style={styles.highRiskButton} // Define styles for the button
-            onPress={() => {messageLovedOne(defaultEmergencyPhone, formattedAddress)}}
-              // TODO: send a message
+            onPress={() => 
+              {
+                if (formattedAddress.current) {
+                  console.log("Sending message")
+                  messageLovedOne(user[0]?.emergencyContacts[0]?.phoneNumber, formattedAddress.current);
+                } else {
+                  console.log("Updating current location in onPress")
+                  updateCurrentLocation(() => {
+                    fetchFormattedAddress().then((address) => {
+                      formattedAddress.current = address;
+                      messageLovedOne(user[0]?.emergencyContacts[0]?.phoneNumber, address);
+                    });
+                  });
+                }
+              }}
           >
             <Text style={styles.highRiskButtonText}>Text my emergency contact</Text>
           </TouchableOpacity>

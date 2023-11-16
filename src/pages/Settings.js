@@ -88,10 +88,19 @@ export default function SettingsScreen({ navigation }) {
             });
             for (let i = 0; i < 5; i++) {
               if (ecNames[i] !== "") {
-                realm.write(() => {
-                  user[0].emergencyContacts[i].name = ecNames[i];
-                  user[0].emergencyContacts[i].phoneNumber = ecPhones[i];
-                });
+                if (user[0].emergencyContacts.length < i + 1) {
+                  realm.write(() => {
+                    user[0].emergencyContacts.push({
+                      name: ecNames[i],
+                      phoneNumber: ecPhones[i],
+                    });
+                  });
+                } else {
+                  realm.write(() => {
+                    user[0].emergencyContacts[i].name = ecNames[i];
+                    user[0].emergencyContacts[i].phoneNumber = ecPhones[i];
+                  });
+                }
               } else {
                 // Handle the case where ecNames[i] is null or unchanged
                 console.log(`ecNames[${i}] is null or unchanged.`);

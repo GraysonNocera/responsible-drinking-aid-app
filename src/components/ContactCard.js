@@ -1,5 +1,5 @@
 import React, {useContext} from "react";
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { callLovedOne, messageLovedOne } from '../services/emergencyContact';
 import LocationContext from '../services/LocationContext';
 import ContactCardIcon from "./ContactCardIcon";

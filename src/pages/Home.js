@@ -8,6 +8,7 @@ import { callEmergencyServices, getLocationAndMessageLovedOne, messageLovedOne }
 import { useQuery } from '@realm/react';
 import { addNotificationResponseReceivedListener } from '../services/notifications';
 import LocationContext from '../services/LocationContext';
+import DataItem from '../components/DataItem';
 
 export default function Home({ navigation: { navigate } }) {
   console.log("Home")
@@ -149,34 +150,10 @@ export default function Home({ navigation: { navigate } }) {
       </View>
 
       <View style={styles.dataContainer}>
-        <View style={styles.dataItem}>
-          <View style={styles.dataIconContainer}>
-            <Icon name="flask" size={24} color="#2196F3" />
-          </View>
-          <View style={styles.dataTextContainer}>
-            <Text style={styles.dataLabel}>Blood Alcohol Content (BAC):</Text>
-            <Text style={styles.dataValue}>{ethanol}</Text>
-          </View>
-        </View>
-        <View style={styles.dataItem}>
-          <View style={styles.dataIconContainer}>
-            <Icon name="car" size={24} color="#2196F3" />
-          </View>
-          <View style={styles.dataTextContainer}>
-            <Text style={styles.dataLabel}>Time until sobriety (hours):</Text>
-            <Text style={styles.dataValue}>{timeToSobrietyString}</Text>
-          </View>
-        </View>
-        <View style={styles.dataItem}>
-          <View style={styles.dataIconContainer}>
-            <Icon name="glass" size={24} color="#E67E22" />
-          </View>
-          <View style={styles.dataTextContainer}>
-            <Text style={styles.dataLabel}>Drink Count:</Text>
-            <Text style={styles.dataValue}>{drinkCount}</Text>
-          </View>
-        </View>
-        {riskMessage === 'High risk' && (
+        <DataItem dataLabel="Blood Alcohol Content (BAC)" dataValue={ethanol} iconName="flask" iconColor="#2196F3" />
+        <DataItem dataLabel="Time until sobriety (hours)" dataValue={timeToSobrietyString} iconName="car" iconColor="#2196F3" />
+        <DataItem dataLabel="Drink Count" dataValue={drinkCount} iconName="glass" iconColor="#E67E22" />
+        { riskMessage === 'High risk' && (
           <TouchableOpacity
             style={styles.highRiskButton} // Define styles for the button
             onPress={() => getLocationAndMessageLovedOne(user[0]?.emergencyContacts[0]?.phoneNumber, updateCurrentLocation, fetchFormattedAddress)}
@@ -191,8 +168,8 @@ export default function Home({ navigation: { navigate } }) {
         <Button title="Dev"
           onPress={() => {
             navigate('Dev')
-          }
-          } />
+          }} 
+        />
       }
       <View style={styles.settingsButtonContainer}>
         <TouchableOpacity
@@ -302,25 +279,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: 'white',
     fontWeight: 'bold',
-  },
-  dataItem: {
-    width: 250,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  dataIconContainer: {
-    marginRight: 10,
-  },
-  dataTextContainer: {
-    flex: 1,
-  },
-  dataLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  dataValue: {
-    fontSize: 16,
   },
   highRiskButton: {
     backgroundColor: 'red',

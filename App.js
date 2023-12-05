@@ -11,6 +11,8 @@ import { setupNotifications } from './src/services/notifications';
 import realmConfig from './src/services/db.js'
 import { LogBox } from 'react-native';
 import LocationService from './src/services/location';
+import useLocation from './src/services/useLocation';
+import LocationContext from './src/services/LocationContext';
 
 LogBox.ignoreLogs(['new NativeEventEmitter()']);
 
@@ -25,16 +27,23 @@ export default function App() {
     LocationService.init();
   }, []);
 
+  const {
+    updateCurrentLocation,
+    fetchFormattedAddress
+  } = useLocation();
+
   return (
-      <RealmProvider {...realmConfig}>
-        <NavigationContainer>
+    <RealmProvider {...realmConfig}>
+      <NavigationContainer>
+        <LocationContext.Provider value={{ updateCurrentLocation, fetchFormattedAddress }}>
           <Stack.Navigator initialRouteName="Home">
             <Stack.Screen name="Home" component={Home} />
             <Stack.Screen name="Emergency" component={Emergency} />
             <Stack.Screen name="Settings" component={Settings} />
             <Stack.Screen name="Dev" component={Dev} />
           </Stack.Navigator>
-        </NavigationContainer>
-      </RealmProvider>
+        </LocationContext.Provider>
+      </NavigationContainer>
+    </RealmProvider>
   );
 }

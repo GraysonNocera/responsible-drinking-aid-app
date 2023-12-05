@@ -12,7 +12,6 @@ export function setupNotifications(shouldShowAlert=true, shouldPlaySound=true, s
   });
 
   Notifications.addNotificationResponseReceivedListener(response => {
-    console.log(response);
     const id = response?.notification?.request?.identifier;
     if (id == Constants.HIGH_RISK_NOTIFICATION_ID) {
       console.log("High risk notification clicked");

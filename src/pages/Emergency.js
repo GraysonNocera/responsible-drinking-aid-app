@@ -1,24 +1,26 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import useLocation from '../services/useLocation';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { callEmergencyServices, callLovedOne, messageLovedOne } from '../services/emergencyContact';
 import { useQuery } from '@realm/react';
+import LocationContext from '../services/LocationContext';
 
 export default function Emergency({ navigation }) {
   const user = useQuery('User');
   const emergencyContacts = user[0]?.emergencyContacts;
+  const { updateCurrentLocation, fetchFormattedAddress } = useContext(LocationContext);
 
-  const {
-    updateCurrentLocation,
-    fetchFormattedAddress,
-    currentLocation,
-    formattedAddress,
-  } = useLocation();
-
-  console.log("in Emergency.js")
-  console.log(`Current location: ${JSON.stringify(currentLocation)}`);
-  console.log(`Formatted address: ${formattedAddress.current}`);
+  const handleMessageLovedOne = (phoneNumber) => {
+    updateCurrentLocation((location, error) => {
+      if (error) {
+        console.error(`Error getting location: ${error}`);
+        return
+      }
+      fetchFormattedAddress(location.latitude, location.longitude).then((address) => {
+        messageLovedOne(phoneNumber, address);
+      });
+    });
+  }
   
   return (
     <View style={styles.container}>
@@ -53,20 +55,7 @@ export default function Emergency({ navigation }) {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.contactButton}
-              onPress={() => {
-                if (formattedAddress.current) {
-                  console.log("Sending message")
-                  messageLovedOne(contact.phoneNumber, formattedAddress.current);
-                } else {
-                  console.log("Updating current location in onPress")
-                  updateCurrentLocation(() => {
-                    fetchFormattedAddress().then((address) => {
-                      formattedAddress.current = address;
-                      messageLovedOne(contact.phoneNumber, address);
-                    });
-                  });
-                }
-              }}
+              onPress={() => handleMessageLovedOne(contact.phoneNumber)}
             >
               <Icon name="envelope" size={24} color="#2196F3" />
               <Text style={styles.buttonText}>Message</Text>

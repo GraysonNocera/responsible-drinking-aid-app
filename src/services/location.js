@@ -18,7 +18,7 @@ class LocationService {
       (error) => {
         errorCallback(error.message);
       },
-      { enableHighAccuracy: false, timeout: 20000, maximumAge: 10000 }
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 10000 }
     );
   };
 }

@@ -28,3 +28,15 @@ export function messageLovedOne(phoneNumber, currentLocation) {
   Linking.openURL(`sms:${phoneNumber}?body=${message}`)
     .catch((error) => console.error(`Error sending message to loved one: ${error}`));
 }
+
+export function getLocationAndMessageLovedOne(phoneNumber, updateCurrentLocation, fetchFormattedAddress) {
+  updateCurrentLocation((location, error) => {
+    if (error) {
+      console.error(`Error getting location: ${error}`);
+      return;
+    }
+    fetchFormattedAddress(location.latitude, location.longitude).then((address) => {
+      messageLovedOne(phoneNumber, address);
+    });
+  });
+}

@@ -1,18 +1,24 @@
 import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
-import React, {useEffect} from 'react';
+import React, { useEffect, useContext } from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import useBluetooth from '../services/useBluetooth';
 import { vStream } from './Dev';
 import * as Constants from '../constants';
-import { callEmergencyServices, messageLovedOne } from '../services/emergencyContact';
+import { callEmergencyServices, getLocationAndMessageLovedOne, messageLovedOne } from '../services/emergencyContact';
 import { useQuery } from '@realm/react';
 import { addNotificationResponseReceivedListener } from '../services/notifications';
-import useLocation from '../services/useLocation';
+import LocationContext from '../services/LocationContext';
 
-export default function Home({ navigation }) {
+export default function Home({ navigation: { navigate } }) {
+  console.log("Home")
+  console.log(navigate)
+
   const user = useQuery('User');
-  
-  const { 
+  const { updateCurrentLocation, fetchFormattedAddress } = useContext(LocationContext);
+  console.log(updateCurrentLocation)
+  console.log(fetchFormattedAddress)
+
+  const {
     connectedDevice,
     ethanol,
     drinkCount,
@@ -25,13 +31,7 @@ export default function Home({ navigation }) {
     disconnectFromDevice
   } = useBluetooth();
 
-  const {
-    updateCurrentLocation,
-    fetchFormattedAddress,
-    currentLocation,
-    formattedAddress,
-  } = useLocation();
-
+  // FOR VIRTUAL BLE STREAM
   useEffect(() => {
     vStream.subscribe((value) => {
       console.log("Home: " + value)
@@ -45,24 +45,21 @@ export default function Home({ navigation }) {
       const id = response?.notification?.request?.identifier;
       console.log(id, highRiskNotificationId.current)
 
-      if (id != highRiskNotificationId.current) { return; }
+      if (id != highRiskNotificationId.current) { return }
       console.log("High risk notification clicked");
 
-      if (formattedAddress.current) {
-        console.log("Sending message")
-        messageLovedOne(user[0]?.emergencyContacts[0]?.phoneNumber, formattedAddress.current);
-      } else {
-        console.log("Updating current location in onPress")
-        updateCurrentLocation(() => {
-          fetchFormattedAddress().then((address) => {
-            formattedAddress.current = address;
-            messageLovedOne(user[0]?.emergencyContacts[0]?.phoneNumber, address);
-          });
+      updateCurrentLocation((location, error) => {
+        if (error) {
+          console.error(`Error getting location: ${error}`);
+          return;
+        }
+        fetchFormattedAddress(location.latitude, location.longitude).then((address) => {
+          messageLovedOne(user[0]?.emergencyContacts[0]?.phoneNumber, address);
         });
-      }
+      });
     });
   }, []);
-  
+
   const handleConnectToBluetooth = async () => {
     console.log('Connecting to bluetooth')
     if (await requestPermissions()) {
@@ -105,7 +102,7 @@ export default function Home({ navigation }) {
 
     return riskMessage;
   }
-  
+
   const getRiskContainerColor = () => {
     let riskContainerColor;
     if (riskMessage === 'Low risk') {
@@ -128,7 +125,7 @@ export default function Home({ navigation }) {
 
   const timeToSobriety = () => {
     const time = Math.max((ethanol - 0.08) / 0.015, 0);
-    var n = new Date(0,0);
+    var n = new Date(0, 0);
     n.setSeconds(+time * 60 * 60);
     return n.toTimeString().slice(0, 5);
   }
@@ -148,9 +145,9 @@ export default function Home({ navigation }) {
         <Text>{connectedDevice ? "Connected!" : "Disconnected!"}</Text>
       </View>
       <View style={[styles.riskContainer, { backgroundColor: riskContainerColor }]}>
-        <Text style={[styles.riskText, {color: riskTextColor }]}>{riskMessage}</Text>
+        <Text style={[styles.riskText, { color: riskTextColor }]}>{riskMessage}</Text>
       </View>
-      
+
       <View style={styles.dataContainer}>
         <View style={styles.dataItem}>
           <View style={styles.dataIconContainer}>
@@ -167,7 +164,7 @@ export default function Home({ navigation }) {
           </View>
           <View style={styles.dataTextContainer}>
             <Text style={styles.dataLabel}>Time until sobriety (hours):</Text>
-            <Text style={styles.dataValue}>{ timeToSobrietyString }</Text>
+            <Text style={styles.dataValue}>{timeToSobrietyString}</Text>
           </View>
         </View>
         <View style={styles.dataItem}>
@@ -182,21 +179,7 @@ export default function Home({ navigation }) {
         {riskMessage === 'High risk' && (
           <TouchableOpacity
             style={styles.highRiskButton} // Define styles for the button
-            onPress={() => 
-              {
-                if (formattedAddress.current) {
-                  console.log("Sending message")
-                  messageLovedOne(user[0]?.emergencyContacts[0]?.phoneNumber, formattedAddress.current);
-                } else {
-                  console.log("Updating current location in onPress")
-                  updateCurrentLocation(() => {
-                    fetchFormattedAddress().then((address) => {
-                      formattedAddress.current = address;
-                      messageLovedOne(user[0]?.emergencyContacts[0]?.phoneNumber, address);
-                    });
-                  });
-                }
-              }}
+            onPress={() => getLocationAndMessageLovedOne(user[0]?.emergencyContacts[0]?.phoneNumber, updateCurrentLocation, fetchFormattedAddress)}
           >
             <Text style={styles.highRiskButtonText}>Text my emergency contact</Text>
           </TouchableOpacity>
@@ -204,17 +187,17 @@ export default function Home({ navigation }) {
       </View>
 
       {/* eslint-disable-next-line no-undef */}
-      { __DEV__ &&
+      {__DEV__ &&
         <Button title="Dev"
           onPress={() => {
-            navigation.navigate('Dev')
+            navigate('Dev')
           }
-        } />
+          } />
       }
       <View style={styles.settingsButtonContainer}>
         <TouchableOpacity
           onPress={() => {
-            navigation.navigate('Settings');
+            navigate('Settings');
           }}
         >
           <Icon name="cog" size={40} color='#2196F3' />
@@ -223,7 +206,7 @@ export default function Home({ navigation }) {
       <View style={styles.contactButtonContainer}>
         <TouchableOpacity
           onPress={() => {
-            navigation.navigate('Emergency');
+            navigate('Emergency');
           }}
         >
           <Icon name="phone" size={40} color='#2196F3' />

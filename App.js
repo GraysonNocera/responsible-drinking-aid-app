@@ -22,15 +22,24 @@ export default function App() {
   // TODO - ask user for location permissions (otherwise bluetooth fails)
   // TODO - bluetooth here or on home screen?
 
-  useEffect(() => {
-    setupNotifications();
-    LocationService.init();
-  }, []);
-
   const {
     updateCurrentLocation,
     fetchFormattedAddress
   } = useLocation();
+
+  useEffect(() => {
+    setupNotifications();
+    LocationService.init();
+    updateCurrentLocation((location, error) => {
+      if (error) {
+        console.error(`Error getting location: ${error}`);
+        return;
+      }
+      fetchFormattedAddress(location.latitude, location.longitude).then((address) => {
+        console.log(`Fetched address: ${address} at app launch`);
+      });
+    });
+  }, []);
 
   return (
     <RealmProvider {...realmConfig}>

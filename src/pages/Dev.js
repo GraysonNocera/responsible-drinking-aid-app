@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View, Button, TextInput } from 'react-native';
 import { useRef } from 'react';
-import { Subject, merge, map, filter, interval, share } from 'rxjs';
+import { Subject, map, filter, interval, share } from 'rxjs';
 import { BluetoothMessages } from '../constants';
 
 export const vStream = new Subject();
@@ -10,8 +10,7 @@ export default function Dev({ navigation }) {
   const [ethanol, onChangeEthanol] = React.useState('');
   const drinkCount = useRef(0);
   console.log("Dev Menu")
-  let drinkObservable = new Subject();
-  let ethanolObservable = new Subject();
+  
   return (
     <View>
       <Text>Dev Menu</Text>
